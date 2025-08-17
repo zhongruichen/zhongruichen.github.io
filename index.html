@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Tmoato API · Gemini 2.5 中转 · 公益免费 · OpenAI兼容</title>
+  <meta name="description" content="Tmoato API 中转站：专注 Gemini 2.5 系列模型，公益免费，注册送5201314 Token。支持 OpenAI 兼容格式与 New API。"/>
+  <meta name="color-scheme" content="dark light"/>
+  <meta name="format-detection" content="telephone=no,email=no,address=no"/>
+
+  <!-- 分享 -->
+  <meta property="og:title" content="Tmoato API · Gemini 2.5 中转 · 公益免费"/>
+  <meta property="og:description" content="专注 Gemini 2.5 · 注册送5201314 Token · 稳定性随缘 · 进入控制台即可开用"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="https://i.ibb.co/4ZpgLHRz/tomato.png"/>
+
+  <link rel="icon" href="https://i.ibb.co/4ZpgLHRz/tomato.png"/>
+
+  <!-- 字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg-primary: #0a0b0f;
+      --bg-secondary: #12141a;
+      --bg-tertiary: #1a1c24;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-primary: #ff6b35;
+      --accent-secondary: #ff8c42;
+      --accent-gradient: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa947 100%);
+      --border-color: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --glass-bg: rgba(255,255,255,0.04);
+      --glass-hover: rgba(255,255,255,0.06);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.4);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --max-width: 1200px;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --accent-primary: #ff6b35;
+      --accent-secondary: #ff8c42;
+      --border-color: rgba(0,0,0,0.08);
+      --border-hover: rgba(0,0,0,0.15);
+      --glass-bg: rgba(0,0,0,0.02);
+      --glass-hover: rgba(0,0,0,0.04);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    /* 基础样式 */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* 背景装饰 */
+    .bg-decoration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-gradient {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+    }
+
+    .bg-gradient-1 {
+      top: -200px;
+      right: -200px;
+      background: radial-gradient(circle, var(--accent-primary), transparent);
+    }
+
+    .bg-gradient-2 {
+      bottom: -200px;
+      left: -200px;
+      background: radial-gradient(circle, var(--accent-secondary), transparent);
+    }
+
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(var(--border-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+      background-size: 50px 50px;
+      opacity: 0.3;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    }
+
+    /* 导航栏 */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 11, 15, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    [data-theme="light"] .navbar {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .navbar-container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .navbar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .navbar-title {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .navbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--glass-hover);
+      border-color: var(--border-hover);
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+    }
+
+    /* 主容器 */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* Hero 区域 */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-bottom: 4rem;
+    }
+
+    @media (max-width: 968px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    .badge-dot.warning {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-description {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .hero-highlight {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.05));
+      border: 2px solid rgba(255, 107, 53, 0.2);
+      border-radius: var(--radius-lg);
+      margin: 0.5rem 0;
+    }
+
+    .token-display {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin: 0.5rem 0;
+    }
+
+    .token-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .hero-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hero-image {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    /* API 信息卡片 */
+    .api-info {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .api-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+    }
+
+    .api-item:hover {
+      background: var(--glass-hover);
+      border-color: var(--border-hover);
+    }
+
+    .api-label {
+      color: var(--text-secondary);
+      margin-right: 1rem;
+    }
+
+    .api-value {
+      flex: 1;
+      color: var(--text-primary);
+      word-break: break-all;
+      margin-right: 1rem;
+    }
+
+    .copy-btn {
+      padding: 0.375rem 0.75rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--glass-hover);
+      border-color: var(--border-hover);
+    }
+
+    /* 模型展示 */
+    .models-section {
+      margin: 4rem 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.125rem;
+    }
+
+    .models-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .model-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .model-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .model-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-hover);
+    }
+
+    .model-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .model-card.featured {
+      border-color: rgba(255, 107, 53, 0.3);
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), transparent);
+    }
+
+    .model-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .model-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .model-badge {
+      padding: 0.25rem 0.5rem;
+      background: rgba(255, 107, 53, 0.1);
+      color: var(--accent-primary);
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .model-description {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .model-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .model-feature {
+      padding: 0.25rem 0.75rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* 统计卡片 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin: 3rem 0;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 900;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    /* 特性卡片 */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 3rem 0;
+    }
+
+    .feature-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-hover);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--accent-gradient);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .feature-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .feature-description {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* 终端 */
+    .terminal {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 3rem 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .terminal-header {
+      background: var(--bg-secondary);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .terminal-dot:nth-child(1) { background: #ff5f56; }
+    .terminal-dot:nth-child(2) { background: #ffbd2e; }
+    .terminal-dot:nth-child(3) { background: #27c93f; }
+
+    .terminal-body {
+      padding: 1.5rem;
+      min-height: 200px;
+      color: #10b981;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* FAQ */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin: 3rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .faq-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .faq-question:hover {
+      background: var(--glass-bg);
+    }
+
+    .faq-answer {
+      padding: 0 1.25rem 1.25rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 5rem;
+      padding: 3rem 0 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--accent-primary);
+    }
+
+    .footer-copyright {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* 响应式 */
+    @media (max-width: 640px) {
+      .navbar-container {
+        padding: 1rem;
+      }
+
+      .navbar-nav {
+        gap: 0.5rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+      }
+
+      .container {
+        padding: 2rem 1rem 4rem;
+      }
+
+      .hero-title {
+        font-size: 2rem;
+      }
+
+      .token-number {
+        font-size: 1.5rem;
+      }
+
+      .models-grid,
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景装饰 -->
+  <div class="bg-decoration">
+    <div class="bg-gradient bg-gradient-1"></div>
+    <div class="bg-gradient bg-gradient-2"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-brand">
+        <img src="https://i.ibb.co/4ZpgLHRz/tomato.png" alt="Tmoato Logo" class="navbar-logo">
+        <span class="navbar-title">Tmoato API</span>
+      </a>
+      <div class="navbar-nav">
+        <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="btn btn-primary">进入控制台</a>
+        <a href="/login" class="btn btn-secondary">登录</a>
+        <a href="/register" class="btn btn-secondary">注册</a>
+        <a href="/console/personal" class="btn btn-secondary">个人设置</a>
+        <button id="themeToggle" class="btn btn-secondary btn-icon" aria-label="切换主题">
+          <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg id="moonIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主容器 -->
+  <div class="container">
+    <!-- Hero 区域 -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-badges">
+          <span class="badge">
+            <span class="badge-dot"></span>
+            专注 Gemini 2.5 系列
+          </span>
+          <span class="badge">
+            <span class="badge-dot warning"></span>
+            稳定性随缘，且用且珍惜
+          </span>
+        </div>
+        
+        <h1 class="hero-title">Tmoato API 中转站</h1>
+        <p class="hero-description">
+          专业的 Gemini 2.5 系列模型中转服务<br>
+          支持 OpenAI 兼容格式与 New API 格式
+        </p>
+
+        <div class="hero-highlight">
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">🎁 新用户福利</div>
+          <div class="token-display">
+            <span>注册即送</span>
+            <span class="token-number">5,201,314</span>
+            <span>Token</span>
+          </div>
+          <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            公益运营，永久免费，不支持充值
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="btn btn-primary">
+            立即开始使用
+          </a>
+          <a href="/register" class="btn btn-secondary">
+            免费注册账号
+          </a>
+        </div>
+
+        <div class="api-info">
+          <div class="api-item">
+            <span class="api-label">Base URL:</span>
+            <span class="api-value" id="baseUrl">https://symjniaw.ap-southeast-1.clawcloudrun.com</span>
+            <button class="copy-btn" data-copy="baseUrl">复制</button>
+          </div>
+          <div class="api-item">
+            <span class="api-label">Endpoint:</span>
+            <span class="api-value" id="endpoint">https://symjniaw.ap-southeast-1.clawcloudrun.com/v1/chat/completions</span>
+            <button class="copy-btn" data-copy="endpoint">复制</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <img src="https://i.ibb.co/4ZpgLHRz/tomato.png" alt="Tmoato Mascot" class="hero-image">
+      </div>
+    </section>
+
+    <!-- 统计数据 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">5.2M+</div>
+        <div class="stat-label">免费 Token 额度</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3</div>
+        <div class="stat-label">主力模型</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">永久免费</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">24/7</div>
+        <div class="stat-label">在线服务</div>
+      </div>
+    </div>
+
+    <!-- 模型展示 -->
+    <section class="models-section">
+      <div class="section-header">
+        <h2 class="section-title">主力模型阵容</h2>
+        <p class="section-subtitle">Gemini 2.5 系列最新模型，性能卓越</p>
+      </div>
+      
+      <div class="models-grid">
+        <div class="model-card featured">
+          <div class="model-header">
+            <span class="model-name">gemini-2.5-pro</span>
+            <span class="model-badge">推荐</span>
+          </div>
+          <p class="model-description">
+            最新一代旗舰模型，拥有卓越的理解和生成能力，适合处理复杂任务和专业应用场景
+          </p>
+          <div class="model-features">
+            <span class="model-feature">超强推理</span>
+            <span class="model-feature">长文本支持</span>
+            <span class="model-feature">多模态</span>
+          </div>
+        </div>
+
+        <div class="model-card featured">
+          <div class="model-header">
+            <span class="model-name">gemini-2.5-flash</span>
+            <span class="model-badge">最快</span>
+          </div>
+          <p class="model-description">
+            响应速度极快的高性能模型，在保持出色质量的同时提供毫秒级响应
+          </p>
+          <div class="model-features">
+            <span class="model-feature">极速响应</span>
+            <span class="model-feature">高并发</span>
+            <span class="model-feature">成本优化</span>
+          </div>
+        </div>
+
+        <div class="model-card featured">
+          <div class="model-header">
+            <span class="model-name">gemini-2.5-flash-lite</span>
+            <span class="model-badge">轻量</span>
+          </div>
+          <p class="model-description">
+            轻量级高效模型，资源占用极低，适合大规模部署和边缘计算场景
+          </p>
+          <div class="model-features">
+            <span class="model-feature">超低延迟</span>
+            <span class="model-feature">资源友好</span>
+            <span class="model-feature">批量处理</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 特性介绍 -->
+    <section class="features-section">
+      <div class="section-header">
+        <h2 class="section-title">为什么选择 Tmoato API</h2>
+        <p class="section-subtitle">专业、稳定、免费的 API 中转服务</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">OpenAI 完全兼容</h3>
+          <p class="feature-description">
+            无缝对接 OpenAI SDK，支持所有主流框架和工具，零成本迁移现有项目
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎁</div>
+          <h3 class="feature-title">超大免费额度</h3>
+          <p class="feature-description">
+            注册即送 5,201,314 Token，公益运营，永久免费，不设任何付费选项
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <h3 class="feature-title">极速响应</h3>
+          <p class="feature-description">
+            优化的网络架构，提供毫秒级响应时间，支持高并发请求处理
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 终端演示 -->
+    <section class="terminal">
+      <div class="terminal-header">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span style="margin-left: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);">terminal</span>
+      </div>
+      <div class="terminal-body" id="terminal"></div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section">
+      <div class="section-header">
+        <h2 class="section-title">常见问题</h2>
+        <p class="section-subtitle">快速了解 Tmoato API</p>
+      </div>
+
+      <div class="faq-grid">
+        <details class="faq-item">
+          <summary class="faq-question">
+            支持哪些模型？
+            <span>▼</span>
+          </summary>
+          <div class="faq-answer">
+            <p>主要支持 Gemini 2.5 系列的三个核心模型：</p>
+            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+              <li>gemini-2.5-pro - 旗舰模型，功能最全面</li>
+              <li>gemini-2.5-flash - 速度最快，适合实时应用</li>
+              <li>gemini-2.5-flash-lite - 轻量级，资源占用最少</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            如何开始使用？
+            <span>▼</span>
+          </summary>
+          <div class="faq-answer">
+            <p>三步即可开始：</p>
+            <ol style="margin-top: 0.5rem; padding-left: 1.5rem;">
+              <li>注册账号，自动获得 5,201,314 Token</li>
+              <li>进入控制台创建 API 密钥</li>
+              <li>使用提供的 endpoint 和密钥调用 API</li>
+            </ol>
+            <p style="margin-top: 0.5rem;">
+              <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console/token" style="color: var(--accent-primary);">
+                立即进入密钥管理 →
+              </a>
+            </p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            是否真的永久免费？
+            <span>▼</span>
+          </summary>
+          <div class="faq-answer">
+            <p>是的，Tmoato API 是公益项目，承诺永久免费。我们不提供任何付费选项，所有用户享受相同的服务。由于是公益运营，稳定性可能会有波动，请理解并合理使用资源。</p>
+          </div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">
+            其他推荐的中转站
+            <span>▼</span>
+          </summary>
+          <div class="faq-answer">
+            <div style="margin-bottom: 1rem;">
+              <strong>"ᖇꫀᧁᖇꫀ"大佬的中转站：</strong><br>
+              <a href="https://drwautdr.ap-southeast-1.clawcloudrun.com" style="color: var(--accent-primary);">访问入口</a><br>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                API: <span id="regre-api">https://drwautdr.ap-southeast-1.clawcloudrun.com/V1/chat/completions</span>
+              </span>
+              <button class="copy-btn" data-copy="regre-api" style="margin-left: 0.5rem;">复制</button>
+            </div>
+            <div>
+              <strong>小飞鸡大佬的中转站：</strong><br>
+              <a href="http://xfj.2s.ink" style="color: var(--accent-primary);">访问入口</a><br>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                API: <span id="xfj-api">http://xfj.2s.ink/v1/chat/completions</span>
+              </span>
+              <button class="copy-btn" data-copy="xfj-api" style="margin-left: 0.5rem;">复制</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="/" class="footer-link">首页</a>
+      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="footer-link">控制台</a>
+      <a href="/login" class="footer-link">登录</a>
+      <a href="/register" class="footer-link">注册</a>
+      <a href="/console/personal" class="footer-link">个人设置</a>
+    </div>
+    <div class="footer-copyright">
+      © <span id="year">2024</span> Tmoato API · 公益项目 · 用爱发电 · symjniaw.ap-southeast-1.clawcloudrun.com
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 年份更新
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // 主题切换
+      const themeToggle = document.getElementById('themeToggle');
+      const html = document.documentElement;
+      const sunIcon = document.getElementById('sunIcon');
+      const moonIcon = document.getElementById('moonIcon');
+
+      // 初始化主题
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      html.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+
+      themeToggle.addEventListener('click', function() {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+      });
+
+      function updateThemeIcon(theme) {
+        if (theme === 'light') {
+          sunIcon.style.display = 'block';
+          moonIcon.style.display = 'none';
+        } else {
+          sunIcon.style.display = 'none';
+          moonIcon.style.display = 'block';
+        }
+      }
+
+      // 复制功能
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const targetId = this.getAttribute('data-copy');
+          const targetElement = document.getElementById(targetId);
+          if (!targetElement) return;
+
+          const text = targetElement.textContent;
+          navigator.clipboard.writeText(text).then(() => {
+            const originalText = this.textContent;
+            this.textContent = '已复制';
+            this.style.background = 'var(--accent-gradient)';
+            this.style.color = 'white';
+            this.style.borderColor = 'transparent';
+            
+            setTimeout(() => {
+              this.textContent = originalText;
+              this.style.background = '';
+              this.style.color = '';
+              this.style.borderColor = '';
+            }, 2000);
+          }).catch(() => {
+            // 降级方案
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const originalText = this.textContent;
+            this.textContent = '已复制';
+            setTimeout(() => {
+              this.textContent = originalText;
+            }, 2000);
+          });
+        });
+      });
+
+      // 终端动画
+      const terminal = document.getElementById('terminal');
+      if (terminal) {
+        const commands = [
+          '$ curl -X POST https://symjniaw.ap-southeast-1.clawcloudrun.com/v1/chat/completions \\',
+          '  -H "Authorization: Bearer YOUR_API_KEY" \\',
+          '  -H "Content-Type: application/json" \\',
+          '  -d \'{"model": "gemini-2.5-pro", "messages": [{"role": "user", "content": "Hello!"}]}\'',
+          '',
+          'HTTP/1.1 200 OK',
+          'Content-Type: application/json',
+          '',
+          '{',
+          '  "id": "chatcmpl-abc123",',
+          '  "object": "chat.completion",',
+          '  "created": 1234567890,',
+          '  "model": "gemini-2.5-pro",',
+          '  "choices": [',
+          '    {',
+          '      "index": 0,',
+          '      "message": {',
+          '        "role": "assistant",',
+          '        "content": "你好！我是 Gemini 2.5 Pro，有什么可以帮助你的吗？"',
+          '      },',
+          '      "finish_reason": "stop"',
+          '    }',
+          '  ],',
+          '  "usage": {',
+          '    "prompt_tokens": 10,',
+          '    "completion_tokens": 20,',
+          '    "total_tokens": 30',
+          '  }',
+          '}'
+        ];
+
+        let currentLine = 0;
+        let currentChar = 0;
+        let currentText = '';
+
+        function typeWriter() {
+          if (currentLine < commands.length) {
+            if (currentChar < commands[currentLine].length) {
+              currentText += commands[currentLine][currentChar];
+              terminal.innerHTML = commands.slice(0, currentLine).join('\n') + 
+                                   (currentLine > 0 ? '\n' : '') + 
+                                   currentText + 
+                                   '<span style="background: #10b981; width: 8px; height: 16px; display: inline-block; animation: blink 1s infinite;"></span>';
+              currentChar++;
+              setTimeout(typeWriter, 30);
+            } else {
+              currentLine++;
+              currentChar = 0;
+              currentText = '';
+              setTimeout(typeWriter, 100);
+            }
+          } else {
+            setTimeout(() => {
+              currentLine = 0;
+              currentChar = 0;
+              currentText = '';
+              terminal.innerHTML = '';
+              typeWriter();
+            }, 3000);
+          }
+        }
+
+        typeWriter();
+      }
+
+      // FAQ 交互
+      document.querySelectorAll('.faq-question').forEach(question => {
+        question.addEventListener('click', function() {
+          const arrow = this.querySelector('span');
+          if (this.parentElement.hasAttribute('open')) {
+            arrow.style.transform = 'rotate(0deg)';
+          } else {
+            arrow.style.transform = 'rotate(180deg)';
+          }
+        });
+      });
+    });
+  </script>
+
+  <style>
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+  </style>
+</body>
+</html>
