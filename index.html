@@ -1,2576 +1,1857 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark" data-accent="sunset">
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Tmoato API · Gemini中转</title>
-  <meta name="description" content="Tmoato API 中转站：目前支持Gemini系列模型，公益免费，注册送5201314 Token。支持 OpenAI 兼容格式与 New API。"/>
-  <meta name="color-scheme" content="dark light"/>
-  <meta name="format-detection" content="telephone=no,email=no,address=no"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GamePrompt Forge - AI 游戏复刻提示词生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
-  <!-- 分享 -->
-  <meta property="og:title" content="Tmoato API · Gemini中转 · 公益免费"/>
-  <meta property="og:description" content="目前支持Gemini系列模型· 注册送5201314 Token · 稳定性随缘 "/>
-  <meta property="og:type" content="website"/>
-  <meta property="og:image" content="https://i.ibb.co/4ZpgLHRz/tomato.png"/>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
 
-  <link rel="icon" href="https://i.ibb.co/4ZpgLHRz/tomato.png"/>
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-  <!-- 字体 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
 
-  <style>
-    :root {
-      --bg-primary: #0a0b0f;
-      --bg-secondary: #12141a;
-      --bg-tertiary: #1a1c24;
-      --text-primary: #ffffff;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
+        .game-chip {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .game-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .game-chip.active {
+            background-color: #3b82f6;
+            border-color: #60a5fa;
+            color: white;
+        }
+        /* Fusion Mode Selected Style */
+        .game-chip.fusion-selected {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            border-color: #a78bfa;
+            color: white;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+        .game-chip.fusion-selected::after {
+            content: '\f058'; /* FontAwesome check-circle */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+            opacity: 0.8;
+        }
 
-      /* 默认 Sunset 配色 */
-      --accent-primary: #ff6b35;
-      --accent-secondary: #ff8c42;
-      --accent-tertiary: #ffa947;
-      --accent-gradient: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa947 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #ffa947 0%, #ff8c42 50%, #ff6b35 100%);
-      --accent-weak: rgba(255, 107, 53, 0.12);
-      --accent-glow: 0 0 40px rgba(255, 107, 53, 0.5);
+        .level-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #334155;
+        }
+        .level-card:hover {
+            border-color: #60a5fa;
+            background-color: #1e293b;
+        }
+        .level-card.active {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+        }
+        /* Special style for Raw Template */
+        .level-card[data-id="raw"] {
+            border-style: dashed;
+        }
+        .level-card[data-id="raw"].active {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            border-color: #94a3b8;
+            box-shadow: none;
+        }
 
-      --border-color: rgba(255,255,255,0.08);
-      --border-hover: rgba(255,255,255,0.15);
-      --glass-bg: rgba(255,255,255,0.04);
-      --glass-hover: rgba(255,255,255,0.06);
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
-      --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
-      --shadow-lg: 0 10px 40px rgba(0,0,0,0.4);
-      --shadow-xl: 0 20px 60px rgba(0,0,0,0.5);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 24px;
-      --max-width: 1200px;
+        .category-btn.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
 
-      --code-bg: #0e1116;
-      --code-border: rgba(255,255,255,0.08);
-      --code-line: #1b2130;
-      --code-text: #e6edf3;
-      --code-muted: #a1b1c6;
-      --token-string: #7ee787;
-      --token-number: #f2cc60;
-      --token-key: #79c0ff;
-      --token-kw: #d2a8ff;
-      --token-bool: #ffa657;
-      --ring: 0 0 0 3px rgba(255, 107, 53, 0.3);
-    }
+        /* Custom Checkbox */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #1e293b;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.15em;
+            height: 1.15em;
+            border: 1px solid #475569;
+            border-radius: 0.25em;
+            display: grid;
+            place-content: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
 
-    /* Light 主题 */
-    [data-theme="light"] {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8fafc;
-      --bg-tertiary: #f1f5f9;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-muted: #94a3b8;
-      --border-color: rgba(0,0,0,0.08);
-      --border-hover: rgba(0,0,0,0.15);
-      --glass-bg: rgba(0,0,0,0.02);
-      --glass-hover: rgba(0,0,0,0.04);
-      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-      --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
-      --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
-      --code-bg: #0f1220;
-      --code-border: rgba(0,0,0,0.08);
-      --code-line: #151a2c;
-      --code-text: #f2f7ff;
-      --code-muted: #b8c3d6;
-    }
+        .custom-checkbox::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
 
-    /* 配色风格 */
-    [data-accent="sunset"] {
-      --accent-primary: #ff6b35;
-      --accent-secondary: #ff8c42;
-      --accent-tertiary: #ffa947;
-      --accent-gradient: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa947 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #ffa947 0%, #ff8c42 50%, #ff6b35 100%);
-      --accent-weak: rgba(255, 107, 53, 0.12);
-      --accent-glow: 0 0 40px rgba(255, 107, 53, 0.5);
-    }
-    [data-accent="aurora"] {
-      --accent-primary: #13e2a1;
-      --accent-secondary: #53f0df;
-      --accent-tertiary: #9bfcd7;
-      --accent-gradient: linear-gradient(135deg, #13e2a1 0%, #53f0df 50%, #9bfcd7 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #9bfcd7 0%, #53f0df 50%, #13e2a1 100%);
-      --accent-weak: rgba(19, 226, 161, 0.12);
-      --accent-glow: 0 0 40px rgba(19, 226, 161, 0.5);
-    }
-    [data-accent="neon"] {
-      --accent-primary: #d946ef;
-      --accent-secondary: #8b5cf6;
-      --accent-tertiary: #22d3ee;
-      --accent-gradient: linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #22d3ee 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 50%, #d946ef 100%);
-      --accent-weak: rgba(217, 70, 239, 0.12);
-      --accent-glow: 0 0 40px rgba(217, 70, 239, 0.5);
-    }
-    [data-accent="ocean"] {
-      --accent-primary: #1fb6ff;
-      --accent-secondary: #00c2ff;
-      --accent-tertiary: #00e0ff;
-      --accent-gradient: linear-gradient(135deg, #1fb6ff 0%, #00c2ff 50%, #00e0ff 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #00e0ff 0%, #00c2ff 50%, #1fb6ff 100%);
-      --accent-weak: rgba(31, 182, 255, 0.12);
-      --accent-glow: 0 0 40px rgba(31, 182, 255, 0.5);
-    }
-    [data-accent="citrus"] {
-      --accent-primary: #ffd166;
-      --accent-secondary: #fb5607;
-      --accent-tertiary: #ff9f1c;
-      --accent-gradient: linear-gradient(135deg, #ffd166 0%, #fb5607 50%, #ff9f1c 100%);
-      --accent-gradient-reverse: linear-gradient(135deg, #ff9f1c 0%, #fb5607 50%, #ffd166 100%);
-      --accent-weak: rgba(251, 86, 7, 0.12);
-      --accent-glow: 0 0 40px rgba(251, 86, 7, 0.5);
-    }
+        .custom-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
 
-    /* 基础样式 */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
 
-    html { 
-      scroll-behavior: smooth;
-      overflow-x: hidden;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
-      min-height: 100vh;
-      position: relative;
-    }
-
-    /* 增强背景装饰 */
-    .bg-decoration {
-      position: fixed; 
-      inset: 0;
-      pointer-events: none; 
-      z-index: 0; 
-      overflow: hidden;
-    }
-    
-    .bg-gradient {
-      position: absolute; 
-      width: 600px; 
-      height: 600px; 
-      border-radius: 50%;
-      filter: blur(120px); 
-      opacity: 0.15;
-      animation: float-gradient 20s ease-in-out infinite;
-    }
-    
-    @keyframes float-gradient {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(30px, -30px) scale(1.1); }
-      66% { transform: translate(-20px, 20px) scale(0.9); }
-    }
-    
-    .bg-gradient-1 {
-      top: -200px; 
-      right: -180px;
-      background: radial-gradient(circle, var(--accent-primary), transparent 60%);
-      animation-delay: 0s;
-    }
-    
-    .bg-gradient-2 {
-      bottom: -220px; 
-      left: -200px;
-      background: radial-gradient(circle, var(--accent-secondary), transparent 60%);
-      animation-delay: -7s;
-    }
-    
-    .bg-gradient-3 {
-      top: 50%; 
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, var(--accent-tertiary), transparent 70%);
-      opacity: 0.08;
-      animation-delay: -14s;
-    }
-    
-    /* 网格背景 */
-    .bg-grid {
-      position: absolute; 
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-      background-size: 50px 50px; 
-      opacity: 0.3;
-      mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-    }
-    
-    /* 动态线条背景 */
-    .bg-lines {
-      position: absolute; 
-      inset: 0;
-      background:
-        repeating-linear-gradient(
-          90deg,
-          transparent 0 60px,
-          rgba(255,255,255,0.02) 60px 61px
-        ),
-        radial-gradient(1200px 600px at 80% -10%, var(--accent-weak), transparent 60%),
-        radial-gradient(900px 500px at -10% 110%, var(--accent-weak), transparent 60%);
-      mix-blend-mode: screen; 
-      opacity: 0.5;
-    }
-
-    /* 粒子背景 */
-    #particlesCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0.6;
-    }
-
-    /* 流光效果 */
-    .glow-line {
-      position: absolute;
-      height: 2px;
-      background: var(--accent-gradient);
-      filter: blur(2px);
-      opacity: 0;
-      animation: glow-sweep 4s ease-in-out infinite;
-    }
-    
-    @keyframes glow-sweep {
-      0% { 
-        width: 0; 
-        opacity: 0; 
-        left: 0;
-      }
-      50% { 
-        width: 100px; 
-        opacity: 1;
-      }
-      100% { 
-        width: 0; 
-        opacity: 0; 
-        left: 100%;
-      }
-    }
-
-    /* 导航栏增强 */
-    .navbar {
-      position: sticky; 
-      top: 0; 
-      z-index: 100;
-      background: rgba(10, 11, 15, 0.8);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid var(--border-color);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
-    }
-    
-    [data-theme="light"] .navbar { 
-      background: rgba(255, 255, 255, 0.8); 
-    }
-
-    .navbar::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--accent-gradient);
-      opacity: 0.3;
-    }
-
-    .navbar-container {
-      max-width: var(--max-width); 
-      margin: 0 auto;
-      padding: 1rem 1.5rem; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      gap: 1rem;
-    }
-    
-    .navbar-brand {
-      display: flex; 
-      align-items: center; 
-      gap: 0.75rem; 
-      text-decoration: none;
-      color: var(--text-primary); 
-      font-weight: 700; 
-      font-size: 1.25rem;
-      transition: transform 0.3s ease;
-    }
-    
-    .navbar-brand:hover {
-      transform: translateY(-2px);
-    }
-    
-    .navbar-logo { 
-      width: 40px; 
-      height: 40px; 
-      border-radius: 50%; 
-      object-fit: cover;
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    
-    .navbar-brand:hover .navbar-logo {
-      transform: scale(1.1);
-      box-shadow: var(--accent-glow);
-    }
-    
-    .navbar-title {
-      background: var(--accent-gradient);
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text;
-      text-shadow: 0 2px 20px rgba(255, 107, 53, 0.3);
-    }
-    
-    .navbar-right { 
-      display: flex; 
-      align-items: center; 
-      gap: 0.75rem; 
-      flex-wrap: wrap; 
-    }
-
-    /* 配色切换器增强 */
-    .accent-switcher {
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      padding: 0.25rem 0.5rem;
-      background: var(--glass-bg); 
-      border: 1px solid var(--border-color); 
-      border-radius: 999px;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-    }
-    
-    .accent-switcher:hover {
-      background: var(--glass-hover);
-      border-color: var(--border-hover);
-    }
-    
-    .accent-label { 
-      color: var(--text-secondary); 
-      font-size: 0.75rem; 
-      padding: 0 0.25rem; 
-    }
-    
-    .accent-dot {
-      width: 20px; 
-      height: 20px; 
-      border-radius: 999px; 
-      cursor: pointer; 
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .accent-dot::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 999px;
-      padding: 2px;
-      background: var(--accent-gradient);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .accent-dot:hover {
-      transform: translateY(-2px) scale(1.2);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    
-    .accent-dot[aria-pressed="true"]::before {
-      opacity: 1;
-    }
-
-    /* 按钮增强 */
-    .btn {
-      display: inline-flex; 
-      align-items: center; 
-      justify-content: center; 
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem; 
-      border-radius: var(--radius-md);
-      font-weight: 500; 
-      font-size: 0.875rem; 
-      text-decoration: none; 
-      transition: all 0.3s ease;
-      cursor: pointer; 
-      border: 1px solid transparent; 
-      white-space: nowrap;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s ease, height 0.6s ease;
-    }
-    
-    .btn:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-    
-    .btn-primary { 
-      background: var(--accent-gradient); 
-      color: white; 
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .btn-primary:hover { 
-      transform: translateY(-2px); 
-      box-shadow: var(--accent-glow);
-    }
-    
-    .btn-secondary { 
-      background: var(--glass-bg); 
-      color: var(--text-primary); 
-      border-color: var(--border-color);
-      backdrop-filter: blur(10px);
-    }
-    
-    .btn-secondary:hover { 
-      background: var(--glass-hover); 
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 20px rgba(255, 107, 53, 0.2);
-    }
-    
-    .btn-icon { 
-      width: 40px; 
-      height: 40px; 
-      padding: 0; 
-      border-radius: var(--radius-sm); 
-    }
-
-    /* 主容器 */
-    .container { 
-      position: relative; 
-      z-index: 1; 
-      max-width: var(--max-width); 
-      margin: 0 auto; 
-      padding: 3rem 1.5rem 5rem; 
-    }
-
-    /* Hero 区域增强 */
-    .hero { 
-      display: grid; 
-      grid-template-columns: 1.2fr 1fr; 
-      gap: 3rem; 
-      align-items: center; 
-      margin-bottom: 4rem;
-      position: relative;
-    }
-    
-    @media (max-width: 968px) { 
-      .hero { 
-        grid-template-columns: 1fr; 
-        gap: 2rem; 
-      } 
-    }
-
-    .hero-content { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 1.5rem;
-      animation: slideInLeft 1s ease-out;
-    }
-    
-    @keyframes slideInLeft {
-      from {
-        opacity: 0;
-        transform: translateX(-50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    
-    .hero-badges { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 0.75rem; 
-    }
-    
-    .badge {
-      display: inline-flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover)); 
-      border: 1px solid var(--border-color); 
-      border-radius: 999px;
-      font-size: 0.875rem; 
-      font-weight: 500;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .badge::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-      transition: left 0.5s ease;
-    }
-    
-    .badge:hover::before {
-      left: 100%;
-    }
-    
-    .badge:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      border-color: var(--accent-primary);
-    }
-    
-    .badge-dot { 
-      width: 8px; 
-      height: 8px; 
-      border-radius: 50%; 
-      background: #10b981; 
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
-      animation: pulse 2s infinite; 
-    }
-    
-    .badge-dot.warning { 
-      background: #f59e0b; 
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
-    }
-
-    @keyframes pulse { 
-      0%, 100% { 
-        opacity: 1; 
-        transform: scale(1);
-      } 
-      50% { 
-        opacity: 0.6;
-        transform: scale(1.2);
-      } 
-    }
-
-    .hero-title {
-      font-size: clamp(2rem, 5vw, 3.5rem); 
-      font-weight: 900; 
-      line-height: 1.1;
-      background: var(--accent-gradient); 
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text;
-      letter-spacing: -0.02em;
-      position: relative;
-      text-shadow: 0 4px 40px rgba(255, 107, 53, 0.3);
-      animation: glow-text 3s ease-in-out infinite;
-    }
-    
-    @keyframes glow-text {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.2); }
-    }
-    
-    .hero-description { 
-      font-size: 1.125rem; 
-      color: var(--text-secondary); 
-      line-height: 1.8;
-      position: relative;
-    }
-    
-    /* 高亮框增强 */
-    .hero-highlight {
-      padding: 1.5rem; 
-      background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.06));
-      border: 2px solid rgba(255, 107, 53, 0.2); 
-      border-radius: var(--radius-lg); 
-      margin: 0.5rem 0;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      animation: highlight-glow 3s ease-in-out infinite;
-    }
-    
-    @keyframes highlight-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.1); }
-      50% { box-shadow: 0 0 40px rgba(255, 107, 53, 0.3); }
-    }
-    
-    .hero-highlight::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: var(--accent-gradient);
-      border-radius: var(--radius-lg);
-      opacity: 0.3;
-      z-index: -1;
-      animation: border-flow 3s linear infinite;
-    }
-    
-    @keyframes border-flow {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .token-display { 
-      display: flex; 
-      align-items: center; 
-      gap: 1rem; 
-      font-size: 1.25rem; 
-      font-weight: 700; 
-      color: var(--accent-primary); 
-      margin: 0.5rem 0; 
-    }
-    
-    .token-number { 
-      font-family: 'JetBrains Mono', monospace; 
-      font-size: 2rem; 
-      background: var(--accent-gradient); 
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text;
-      text-shadow: 0 2px 20px rgba(255, 107, 53, 0.5);
-      animation: number-pulse 2s ease-in-out infinite;
-    }
-    
-    @keyframes number-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
-    .hero-actions { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 0.75rem; 
-    }
-
-    /* Hero 视觉增强 */
-    .hero-visual { 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      position: relative;
-      animation: slideInRight 1s ease-out;
-    }
-    
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    
-    .hero-visual::before {
-      content: '';
-      position: absolute;
-      width: 120%;
-      height: 120%;
-      background: radial-gradient(circle, var(--accent-weak), transparent 70%);
-      animation: pulse-bg 3s ease-in-out infinite;
-    }
-    
-    @keyframes pulse-bg {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-    }
-    
-    .hero-image { 
-      width: 100%; 
-      max-width: 300px; 
-      height: auto; 
-      animation: float 6s ease-in-out infinite;
-      filter: drop-shadow(0 20px 40px rgba(255, 107, 53, 0.3));
-      position: relative;
-      z-index: 1;
-    }
-    
-    @keyframes float { 
-      0%, 100% { transform: translateY(0); } 
-      50% { transform: translateY(-20px); } 
-    }
-
-    /* API 信息卡片增强 */
-    .api-info { 
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg); 
-      padding: 1.5rem; 
-      margin-top: 1.5rem;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-    
-    .api-info::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--accent-gradient);
-      animation: scan 3s linear infinite;
-    }
-    
-    @keyframes scan {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .api-item {
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      padding: 0.75rem; 
-      margin: 0.5rem 0; 
-      background: linear-gradient(135deg, var(--glass-bg), transparent); 
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md); 
-      font-family: 'JetBrains Mono', monospace; 
-      font-size: 0.875rem; 
-      gap: 0.75rem;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .api-item::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, var(--accent-weak), transparent);
-      transform: translateY(-50%);
-      transition: left 0.5s ease;
-    }
-    
-    .api-item:hover::after {
-      left: 100%;
-    }
-    
-    .api-item:hover { 
-      background: var(--glass-hover); 
-      border-color: var(--accent-primary);
-      transform: translateX(5px);
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.1);
-    }
-    
-    .api-label { 
-      color: var(--text-secondary); 
-      margin-right: 0.5rem; 
-      flex: 0 0 auto; 
-    }
-    
-    .api-value { 
-      flex: 1; 
-      color: var(--text-primary); 
-      word-break: break-all; 
-    }
-    
-    .copy-btn {
-      padding: 0.375rem 0.75rem; 
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-sm);
-      color: var(--text-primary); 
-      font-size: 0.75rem; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: all 0.3s ease; 
-      flex: 0 0 auto;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .copy-btn:hover { 
-      background: var(--accent-gradient); 
-      color: white;
-      border-color: transparent;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-    }
-
-    /* 统计卡片增强 */
-    .stats-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-      gap: 1.5rem; 
-      margin: 3rem 0; 
-    }
-    
-    .stat-card {
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg);
-      padding: 1.5rem; 
-      text-align: center; 
-      transition: all 0.3s ease; 
-      position: relative; 
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      cursor: pointer;
-    }
-    
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--accent-gradient);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .stat-card::after {
-      content: ''; 
-      position: absolute; 
-      inset: 0 0 auto 0; 
-      height: 3px; 
-      background: var(--accent-gradient); 
-      opacity: 0.7;
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
-    
-    .stat-card:hover { 
-      transform: translateY(-5px); 
-      box-shadow: 0 10px 40px rgba(255, 107, 53, 0.2);
-      border-color: var(--accent-primary);
-    }
-    
-    .stat-card:hover::before {
-      opacity: 0.05;
-    }
-    
-    .stat-card:hover::after {
-      transform: scaleX(1);
-    }
-    
-    .stat-value {
-      font-size: 2rem; 
-      font-weight: 900; 
-      background: var(--accent-gradient);
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text; 
-      margin-bottom: 0.5rem;
-      position: relative;
-      z-index: 1;
-      text-shadow: 0 2px 20px rgba(255, 107, 53, 0.3);
-      animation: stat-glow 2s ease-in-out infinite;
-    }
-    
-    @keyframes stat-glow {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.3); }
-    }
-    
-    .stat-label { 
-      color: var(--text-secondary); 
-      font-size: 0.875rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* 新增装饰图标 */
-    .stat-icon {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 2rem;
-      opacity: 0.1;
-      transform: rotate(-15deg);
-    }
-
-    /* 模型展示增强 */
-    .models-section { 
-      margin: 4rem 0;
-      position: relative;
-    }
-    
-    .section-header { 
-      text-align: center; 
-      margin-bottom: 3rem; 
-    }
-    
-    .section-title {
-      font-size: 2rem; 
-      font-weight: 900; 
-      margin-bottom: 0.5rem;
-      background: var(--accent-gradient); 
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent; 
-      background-clip: text;
-      text-shadow: 0 4px 40px rgba(255, 107, 53, 0.3);
-      position: relative;
-      display: inline-block;
-    }
-    
-    .section-title::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 3px;
-      background: var(--accent-gradient);
-      border-radius: 999px;
-    }
-    
-    .section-subtitle { 
-      color: var(--text-secondary); 
-      font-size: 1.125rem;
-      margin-top: 1rem;
-    }
-
-    .models-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-      gap: 1.5rem; 
-    }
-    
-    .model-card {
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg);
-      padding: 1.5rem; 
-      transition: all 0.3s ease; 
-      position: relative; 
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      cursor: pointer;
-    }
-    
-    .model-card::before {
-      content: ''; 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      right: 0; 
-      height: 3px; 
-      background: var(--accent-gradient); 
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
-    }
-    
-    .model-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--accent-weak), transparent 50%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .model-card:hover { 
-      transform: translateY(-6px) scale(1.02); 
-      box-shadow: 0 20px 60px rgba(255, 107, 53, 0.2);
-      border-color: var(--accent-primary);
-    }
-    
-    .model-card:hover::before { 
-      transform: scaleX(1); 
-    }
-    
-    .model-card:hover::after {
-      opacity: 1;
-    }
-    
-    .model-card.featured { 
-      border-color: rgba(255, 107, 53, 0.3); 
-      background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), transparent);
-      animation: featured-pulse 3s ease-in-out infinite;
-    }
-    
-    @keyframes featured-pulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.1); }
-      50% { box-shadow: 0 0 40px rgba(255, 107, 53, 0.3); }
-    }
-    
-    .model-header { 
-      display: flex; 
-      align-items: flex-start; 
-      justify-content: space-between; 
-      margin-bottom: 1rem; 
-    }
-    
-    .model-name { 
-      font-family: 'JetBrains Mono', monospace; 
-      font-size: 1.125rem; 
-      font-weight: 600; 
-      color: var(--text-primary);
-      background: linear-gradient(90deg, var(--text-primary), var(--accent-primary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .model-badge { 
-      padding: 0.25rem 0.5rem; 
-      background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.1)); 
-      color: var(--accent-primary); 
-      border-radius: var(--radius-sm); 
-      font-size: 0.75rem; 
-      font-weight: 600;
-      border: 1px solid rgba(255, 107, 53, 0.3);
-      animation: badge-shine 3s linear infinite;
-    }
-    
-    @keyframes badge-shine {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    
-    .model-description { 
-      color: var(--text-secondary); 
-      font-size: 0.875rem; 
-      line-height: 1.6; 
-      margin-bottom: 1rem; 
-    }
-    
-    .model-features { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 0.5rem; 
-    }
-    
-    .model-feature { 
-      padding: 0.25rem 0.75rem; 
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover)); 
-      border: 1px solid var(--border-color); 
-      border-radius: 999px; 
-      font-size: 0.75rem; 
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-    }
-    
-    .model-feature:hover {
-      border-color: var(--accent-primary);
-      color: var(--accent-primary);
-      transform: translateY(-2px);
-    }
-
-    /* 特性卡片增强 */
-    .features-section { 
-      margin-top: 4rem;
-      position: relative;
-    }
-    
-    .features-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-      gap: 1.5rem; 
-      margin: 3rem 0; 
-    }
-    
-    .feature-card {
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg);
-      padding: 1.5rem; 
-      transition: all 0.3s ease; 
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-    
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: -100%;
-      left: -100%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, var(--accent-weak), transparent 70%);
-      transition: all 0.5s ease;
-      opacity: 0;
-    }
-    
-    .feature-card:hover::before {
-      top: -50%;
-      left: -50%;
-      opacity: 1;
-    }
-    
-    .feature-card:hover { 
-      transform: translateY(-4px) scale(1.02); 
-      box-shadow: 0 15px 50px rgba(255, 107, 53, 0.2);
-      border-color: var(--accent-primary);
-    }
-    
-    .feature-icon {
-      width: 56px; 
-      height: 56px; 
-      background: var(--accent-gradient); 
-      border-radius: var(--radius-md);
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      margin-bottom: 1rem; 
-      font-size: 1.75rem;
-      box-shadow: 0 8px 30px rgba(255, 107, 53, 0.3);
-      position: relative;
-      z-index: 1;
-      animation: icon-float 3s ease-in-out infinite;
-    }
-    
-    @keyframes icon-float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    
-    .feature-title { 
-      font-size: 1.125rem; 
-      font-weight: 600; 
-      margin-bottom: 0.5rem; 
-      color: var(--text-primary);
-      position: relative;
-      z-index: 1;
-    }
-    
-    .feature-description { 
-      color: var(--text-secondary); 
-      font-size: 0.875rem; 
-      line-height: 1.6;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* 终端增强 */
-    .terminal {
-      background: linear-gradient(135deg, var(--bg-tertiary), var(--code-bg)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg);
-      overflow: hidden; 
-      margin: 3rem 0; 
-      font-family: 'JetBrains Mono', monospace;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      position: relative;
-    }
-    
-    .terminal::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent 0,
-        transparent 2px,
-        rgba(255,255,255,0.01) 2px,
-        rgba(255,255,255,0.01) 4px
-      );
-      pointer-events: none;
-      z-index: 1;
-    }
-    
-    .terminal-header { 
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      padding: 0.75rem 1rem; 
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      border-bottom: 1px solid var(--border-color);
-      position: relative;
-      z-index: 2;
-    }
-    
-    .terminal-dot { 
-      width: 12px; 
-      height: 12px; 
-      border-radius: 50%;
-      transition: all 0.3s ease;
-    }
-    
-    .terminal-dot:hover {
-      transform: scale(1.2);
-      filter: brightness(1.3);
-    }
-    
-    .terminal-dot:nth-child(1) { 
-      background: #ff5f56; 
-      box-shadow: 0 0 10px #ff5f56;
-    }
-    .terminal-dot:nth-child(2) { 
-      background: #ffbd2e; 
-      box-shadow: 0 0 10px #ffbd2e;
-    }
-    .terminal-dot:nth-child(3) { 
-      background: #27c93f; 
-      box-shadow: 0 0 10px #27c93f;
-    }
-    
-    .terminal-body { 
-      padding: 1.5rem; 
-      min-height: 200px; 
-      color: #10b981; 
-      font-size: 0.875rem; 
-      line-height: 1.6;
-      position: relative;
-      z-index: 2;
-      text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-    }
-
-    /* FAQ 增强 */
-    .faq-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
-      gap: 1.5rem; 
-      margin: 3rem 0; 
-    }
-    
-    @media (max-width: 768px) { 
-      .faq-grid { 
-        grid-template-columns: 1fr; 
-      } 
-    }
-    
-    .faq-item { 
-      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); 
-      border: 1px solid var(--border-color); 
-      border-radius: var(--radius-lg); 
-      overflow: hidden;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-    }
-    
-    .faq-item:hover {
-      box-shadow: 0 10px 40px rgba(255, 107, 53, 0.1);
-      border-color: var(--accent-primary);
-    }
-    
-    .faq-question {
-      padding: 1.25rem; 
-      font-weight: 600; 
-      color: var(--text-primary); 
-      cursor: pointer; 
-      user-select: none;
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .faq-question::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--accent-gradient);
-      transition: width 0.3s ease;
-    }
-    
-    .faq-question:hover { 
-      background: linear-gradient(135deg, var(--glass-bg), transparent);
-      padding-left: 1.5rem;
-    }
-    
-    .faq-question:hover::after {
-      width: 100%;
-    }
-    
-    .faq-question span {
-      transition: transform 0.3s ease;
-    }
-    
-    .faq-answer { 
-      padding: 0 1.25rem 1.25rem; 
-      color: var(--text-secondary); 
-      font-size: 0.875rem; 
-      line-height: 1.6; 
-    }
-
-    /* Footer 增强 */
-    .footer { 
-      margin-top: 5rem; 
-      padding: 3rem 0 2rem; 
-      border-top: 1px solid var(--border-color); 
-      text-align: center; 
-      color: var(--text-secondary);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--accent-gradient);
-      animation: scan 4s linear infinite;
-    }
-    
-    .footer-links { 
-      display: flex; 
-      justify-content: center; 
-      gap: 2rem; 
-      margin-bottom: 1.5rem; 
-      flex-wrap: wrap; 
-    }
-    
-    .footer-link { 
-      color: var(--text-secondary); 
-      text-decoration: none; 
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    
-    .footer-link::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 2px;
-      background: var(--accent-gradient);
-      transition: width 0.3s ease;
-    }
-    
-    .footer-link:hover { 
-      color: var(--accent-primary);
-      transform: translateY(-2px);
-    }
-    
-    .footer-link:hover::after {
-      width: 100%;
-    }
-
-    /* 快速上手增强 */
-    .qs-section { 
-      margin: 4rem 0 2rem;
-      position: relative;
-    }
-    
-    .qs-wrap {
-      background: linear-gradient(135deg, var(--code-bg), #0a0b12);
-      border: 1px solid var(--code-border);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      position: relative;
-    }
-    
-    .qs-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        90deg,
-        transparent 0,
-        transparent 2px,
-        rgba(255,255,255,0.01) 2px,
-        rgba(255,255,255,0.01) 4px
-      );
-      pointer-events: none;
-      z-index: 1;
-    }
-    
-    .qs-head {
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      gap: 1rem;
-      padding: 0.75rem 1rem; 
-      background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent); 
-      border-bottom: 1px solid var(--code-border);
-      position: relative;
-      z-index: 2;
-    }
-    
-    .qs-tabs, .qs-models {
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      flex-wrap: wrap;
-    }
-    
-    .qs-tab, .qs-model {
-      font-family: 'JetBrains Mono', monospace; 
-      font-size: 0.75rem; 
-      font-weight: 600;
-      padding: 0.4rem 0.7rem; 
-      border-radius: 999px; 
-      cursor: pointer;
-      background: transparent; 
-      color: var(--code-muted); 
-      border: 1px solid var(--border-color); 
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .qs-tab::before, .qs-model::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--accent-gradient);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .qs-tab:hover, .qs-model:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.2);
-    }
-    
-    .qs-tab.active, .qs-model.active { 
-      background: var(--accent-gradient); 
-      color: #fff; 
-      border-color: transparent;
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-    }
-    
-    .qs-kbd { 
-      font-family: 'JetBrains Mono', monospace; 
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover)); 
-      border: 1px solid var(--border-color); 
-      border-bottom-width: 2px; 
-      padding: 0.2rem 0.45rem; 
-      border-radius: 6px; 
-      color: var(--text-secondary);
-      font-size: 0.75rem;
-    }
-    
-    .qs-body { 
-      position: relative;
-      z-index: 2;
-    }
-    
-    pre.codeblock {
-      margin: 0; 
-      padding: 1rem 1.25rem 1.25rem; 
-      overflow: auto; 
-      background: transparent; 
-      color: var(--code-text);
-      counter-reset: line;
-      position: relative;
-    }
-    
-    pre.codeblock::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--accent-gradient);
-      opacity: 0.5;
-    }
-    
-    pre.codeblock code { 
-      font-family: 'JetBrains Mono', monospace; 
-      font-size: 0.85rem; 
-    }
-    
-    .code-line { 
-      display: block; 
-      padding-left: 1rem; 
-      border-left: 1px solid var(--code-line); 
-      margin-left: 0.75rem;
-      transition: all 0.3s ease;
-    }
-    
-    .code-line:hover {
-      background: rgba(255,255,255,0.02);
-      border-left-color: var(--accent-primary);
-    }
-    
-    .code-line::before {
-      counter-increment: line; 
-      content: counter(line);
-      display: inline-block; 
-      width: 2ch; 
-      margin-right: 1ch; 
-      color: var(--code-muted);
-    }
-    
-    .tok-key { color: var(--token-key); }
-    .tok-str { color: var(--token-string); }
-    .tok-num { color: var(--token-number); }
-    .tok-kw  { color: var(--token-kw); }
-    .tok-bool{ color: var(--token-bool); }
-
-    .qs-actions {
-      display: flex; 
-      align-items: center; 
-      gap: 0.5rem;
-    }
-    
-    .qs-copy {
-      margin-right: 0.25rem;
-      padding: 0.45rem 0.8rem; 
-      border-radius: 8px; 
-      font-size: 0.8rem; 
-      font-weight: 700;
-      border: 1px solid var(--border-color); 
-      color: var(--text-primary); 
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover));
-      cursor: pointer; 
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .qs-copy::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: var(--accent-gradient);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.5s ease;
-    }
-    
-    .qs-copy:hover { 
-      background: transparent;
-      color: var(--accent-primary);
-      border-color: var(--accent-primary);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-    }
-    
-    .qs-copy:hover::before {
-      width: 200%;
-      height: 200%;
-      opacity: 0.1;
-    }
-
-    /* 动画光标效果 */
-    .cursor-halo {
-      position: fixed; 
-      width: 300px; 
-      height: 300px; 
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.03), transparent 50%);
-      pointer-events: none; 
-      mix-blend-mode: overlay; 
-      z-index: 999; 
-      opacity: 0.8; 
-      transform: translate(-50%, -50%);
-      filter: blur(40px);
-    }
-
-    /* 悬浮装饰元素 */
-    .float-element {
-      position: absolute;
-      pointer-events: none;
-      opacity: 0.1;
-      animation: float-random 20s ease-in-out infinite;
-    }
-    
-    @keyframes float-random {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); }
-      25% { transform: translate(30px, -30px) rotate(90deg); }
-      50% { transform: translate(-20px, 20px) rotate(180deg); }
-      75% { transform: translate(40px, 10px) rotate(270deg); }
-    }
-
-    /* 波浪动画背景 */
-    .wave-bg {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ff6b35' fill-opacity='0.1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,133.3C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
-      background-size: cover;
-      opacity: 0.3;
-      animation: wave 10s linear infinite;
-    }
-    
-    @keyframes wave {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-1440px); }
-    }
-
-    /* 滚动动画 */
-    .scroll-reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: all 0.6s ease;
-    }
-    
-    .scroll-reveal.active {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* 闪烁效果 */
-    @keyframes blink { 
-      0%, 50% { opacity: 1; } 
-      51%, 100% { opacity: 0; } 
-    }
-
-    /* 彩虹渐变文字 */
-    .rainbow-text {
-      background: linear-gradient(
-        90deg,
-        #ff6b35,
-        #ff8c42,
-        #ffa947,
-        #ffd166,
-        #06ffa5,
-        #1fb6ff,
-        #d946ef,
-        #ff6b35
-      );
-      background-size: 200% 100%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: rainbow 5s linear infinite;
-    }
-    
-    @keyframes rainbow {
-      0% { background-position: 0% 50%; }
-      100% { background-position: 200% 50%; }
-    }
-
-    /* 呼吸灯效果 */
-    .breathing {
-      animation: breathing 3s ease-in-out infinite;
-    }
-    
-    @keyframes breathing {
-      0%, 100% { 
-        opacity: 0.5; 
-        transform: scale(1);
-      }
-      50% { 
-        opacity: 1; 
-        transform: scale(1.05);
-      }
-    }
-
-    /* 滑入动画 */
-    @keyframes slideInUp {
-      from {
-        opacity: 0;
-        transform: translateY(50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* 响应式 */
-    @media (max-width: 640px) {
-      .navbar-container { padding: 1rem; }
-      .btn { padding: 0.5rem 1rem; font-size: 0.8125rem; }
-      .container { padding: 2rem 1rem 4rem; }
-      .hero-title { font-size: 2rem; }
-      .token-number { font-size: 1.5rem; }
-      .models-grid, .features-grid { grid-template-columns: 1fr; }
-      .qs-head { flex-direction: column; align-items: flex-start; }
-      .qs-actions { width: 100%; justify-content: space-between; }
-      #particlesCanvas { display: none; }
-    }
-
-    /* 加载动画 */
-    .loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: var(--bg-primary);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.5s ease;
-    }
-    
-    .loading-spinner {
-      width: 60px;
-      height: 60px;
-      border: 3px solid var(--border-color);
-      border-top-color: var(--accent-primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* 打印样式 */
-    @media print {
-      .navbar, .footer, .btn, .copy-btn, .accent-switcher, #themeToggle, .bg-decoration, #particlesCanvas, .cursor-halo {
-        display: none !important;
-      }
-    }
-
-    /* 可访问性：减少动效 */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { 
-        animation: none !important; 
-        transition: none !important; 
-      }
-    }
-
-    /* 细节增强 */
-    .note {
-      display: inline-flex; 
-      align-items: center; 
-      gap: 0.5rem; 
-      font-size: 0.8rem;
-      color: var(--text-secondary); 
-      background: linear-gradient(135deg, var(--glass-bg), var(--glass-hover)); 
-      border: 1px solid var(--border-color);
-      padding: 0.35rem 0.6rem; 
-      border-radius: 999px;
-      transition: all 0.3s ease;
-    }
-    
-    .note:hover {
-      border-color: var(--accent-primary);
-      transform: translateY(-2px);
-    }
-  </style>
+        /* Mode Switcher */
+        .mode-switch-btn {
+            transition: all 0.3s;
+        }
+        .mode-switch-btn.active {
+            background-color: #334155;
+            color: #fff;
+            border-color: #64748b;
+        }
+        /* Fusion specific header */
+        .fusion-header {
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%);
+            border-radius: 0.5rem;
+            border: 1px solid #4f46e5;
+        }
+    </style>
 </head>
-<body>
-  <!-- 加载动画 -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner"></div>
-  </div>
+<body class="h-screen flex flex-col overflow-hidden">
 
-  <!-- 增强背景装饰 -->
-  <div class="bg-decoration" aria-hidden="true">
-    <div class="bg-gradient bg-gradient-1"></div>
-    <div class="bg-gradient bg-gradient-2"></div>
-    <div class="bg-gradient bg-gradient-3"></div>
-    <div class="bg-grid"></div>
-    <div class="bg-lines"></div>
-    <div class="glow-line" style="top: 20%; animation-delay: 0s;"></div>
-    <div class="glow-line" style="top: 50%; animation-delay: 1.5s;"></div>
-    <div class="glow-line" style="top: 80%; animation-delay: 3s;"></div>
-  </div>
-  
-  <!-- 粒子背景 -->
-  <canvas id="particlesCanvas" aria-hidden="true"></canvas>
-  
-  <!-- 光标效果 -->
-  <div class="cursor-halo" id="cursorHalo" aria-hidden="true"></div>
-
-  <!-- 导航栏 -->
-  <nav class="navbar" role="navigation" aria-label="主导航">
-    <div class="navbar-container">
-      <a href="/" class="navbar-brand">
-        <img src="https://i.ibb.co/4ZpgLHRz/tomato.png" alt="Tmoato Logo" class="navbar-logo">
-        <span class="navbar-title">Tmoato API</span>
-      </a>
-
-      <div class="navbar-right">
-        <div class="accent-switcher" aria-label="配色风格切换">
-          <span class="accent-label">风格</span>
-          <button class="accent-dot" title="Sunset" style="background: linear-gradient(135deg, #ff6b35, #ff8c42);" data-accent="sunset" aria-label="Sunset" aria-pressed="true"></button>
-          <button class="accent-dot" title="Aurora" style="background: linear-gradient(135deg, #13e2a1, #53f0df);" data-accent="aurora" aria-label="Aurora"></button>
-          <button class="accent-dot" title="Neon" style="background: linear-gradient(135deg, #d946ef, #8b5cf6);" data-accent="neon" aria-label="Neon"></button>
-          <button class="accent-dot" title="Ocean" style="background: linear-gradient(135deg, #1fb6ff, #00e0ff);" data-accent="ocean" aria-label="Ocean"></button>
-          <button class="accent-dot" title="Citrus" style="background: linear-gradient(135deg, #ffd166, #fb5607);" data-accent="citrus" aria-label="Citrus"></button>
-        </div>
-
-        <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="btn btn-primary" target="_top">
-          <span>进入控制台</span>
-        </a>
-        <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/login" class="btn btn-secondary" target="_top">登录</a>
-        <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/register" class="btn btn-secondary" target="_top">注册</a>
-        <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console/personal" class="btn btn-secondary" target="_top">个人设置</a>
-
-        <button id="themeToggle" class="btn btn-secondary btn-icon" aria-label="切换主题（快捷键：S）">
-          <svg id="sunIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-          <svg id="moonIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- 主容器 -->
-  <div class="container">
-    <!-- Hero 区域 -->
-    <section class="hero">
-      <div class="hero-content">
-        <div class="hero-badges">
-          <span class="badge">
-            <span class="badge-dot"></span>
-            目前支持Gemini系列模型
-          </span>
-          <span class="badge">
-            <span class="badge-dot warning"></span>
-            稳定性随缘，且用且珍惜
-          </span>
-          <span class="note" aria-label="提示">OpenAI 兼容 · New API 兼容</span>
-        </div>
-
-        <h1 class="hero-title">Tmoato API 中转站</h1>
-        <p class="hero-description">
-          主要Gemini 2.5 系列模型中转服务<br>
-          支持 OpenAI 兼容格式与 New API 格式
-        </p>
-
-        <div class="hero-highlight breathing" role="note" aria-label="新用户福利">
-          <div style="font-weight: 600; margin-bottom: 0.5rem;">🎁 新用户福利</div>
-          <div class="token-display">
-            <span>注册即送</span>
-            <span class="token-number">5,201,314</span>
-            <span>Token</span>
-          </div>
-          <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">
-            公益运营，永久免费，不支持充值
-          </div>
-        </div>
-
-        <div class="hero-actions">
-          <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="btn btn-primary" target="_top">
-            <span>✨ 立即开始使用</span>
-          </a>
-          <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/register" class="btn btn-secondary" target="_top">
-            <span>🚀 免费注册账号</span>
-          </a>
-        </div>
-
-        <div class="api-info" aria-label="API 基本信息">
-          <div class="api-item">
-            <span class="api-label">Base URL:</span>
-            <span class="api-value" id="baseUrl">https://symjniaw.ap-southeast-1.clawcloudrun.com</span>
-            <button class="copy-btn" data-copy="baseUrl">复制</button>
-          </div>
-          <div class="api-item">
-            <span class="api-label">Endpoint:</span>
-            <span class="api-value" id="endpoint">https://symjniaw.ap-southeast-1.clawcloudrun.com/v1/chat/completions</span>
-            <button class="copy-btn" data-copy="endpoint">复制</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-visual">
-        <img src="https://i.ibb.co/4ZpgLHRz/tomato.png" alt="Tmoato Mascot" class="hero-image">
-        <div class="float-element" style="top: 10%; left: 10%; font-size: 2rem;">🌟</div>
-        <div class="float-element" style="top: 20%; right: 15%; font-size: 1.5rem; animation-delay: -5s;">✨</div>
-        <div class="float-element" style="bottom: 30%; left: 5%; font-size: 1.8rem; animation-delay: -10s;">💫</div>
-        <div class="float-element" style="bottom: 10%; right: 20%; font-size: 1.6rem; animation-delay: -15s;">🎯</div>
-      </div>
-    </section>
-
-    <!-- 统计数据 -->
-    <div class="stats-grid scroll-reveal" aria-label="概览">
-      <div class="stat-card">
-        <span class="stat-icon">🎁</span>
-        <div class="stat-value">5.2M+</div>
-        <div class="stat-label">免费 Token 额度</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon">🤖</span>
-        <div class="stat-value">3</div>
-        <div class="stat-label">主力模型</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon">💯</span>
-        <div class="stat-value">100%</div>
-        <div class="stat-label">永久免费</div>
-      </div>
-    </div>
-
-    <!-- 快速上手 -->
-    <section class="qs-section scroll-reveal" aria-labelledby="qsTitle">
-      <div class="section-header" style="margin-bottom:1.5rem;">
-        <h2 class="section-title" id="qsTitle">快速上手</h2>
-        <p class="section-subtitle">一键复制样例代码，直接调用</p>
-      </div>
-
-      <div class="qs-wrap" role="region" aria-label="代码示例">
-        <div class="qs-head">
-          <div class="qs-tabs" role="tablist" aria-label="语言选择">
-            <button class="qs-tab active" role="tab" aria-selected="true" data-lang="curl">cURL</button>
-            <button class="qs-tab" role="tab" aria-selected="false" data-lang="node">Node.js</button>
-            <button class="qs-tab" role="tab" aria-selected="false" data-lang="python">Python</button>
-          </div>
-
-          <div class="qs-actions" aria-label="操作">
-            <div class="qs-models" role="group" aria-label="模型选择">
-              <button class="qs-model active" data-model="gemini-2.5-pro" aria-pressed="true">gemini-2.5-pro</button>
-              <button class="qs-model" data-model="gemini-2.5-flash" aria-pressed="false">gemini-2.5-flash</button>
-              <button class="qs-model" data-model="gemini-2.5-flash-lite" aria-pressed="false">gemini-2.5-flash-lite</button>
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-700 p-4 shadow-lg z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-gamepad text-3xl text-blue-500"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider text-white">GAMEPROMPT <span class="text-blue-500">FORGE</span></h1>
+                    <p class="text-xs text-slate-400">AI 游戏复刻提示词构建引擎</p>
+                </div>
             </div>
-            <button class="qs-copy" id="copyCodeBtn" aria-label="复制代码">📋 复制代码</button>
-            <span class="qs-kbd" title="快捷键">S 切换主题</span>
-          </div>
-        </div>
-
-        <div class="qs-body">
-          <pre class="codeblock" aria-live="polite" aria-atomic="true"><code id="codeOutput"></code></pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- 模型展示 -->
-    <section class="models-section scroll-reveal">
-      <div class="section-header">
-        <h2 class="section-title">主力模型阵容</h2>
-        <p class="section-subtitle">Gemini 2.5 系列最新模型，性能卓越</p>
-      </div>
-
-      <div class="models-grid">
-        <div class="model-card featured">
-          <div class="model-header">
-            <span class="model-name">gemini-2.5-pro</span>
-            <span class="model-badge">⭐ 推荐</span>
-          </div>
-          <p class="model-description">
-            最新一代旗舰模型，拥有卓越的理解和生成能力，适合处理复杂任务和专业应用场景
-          </p>
-          <div class="model-features">
-            <span class="model-feature">🧠 超强推理</span>
-            <span class="model-feature">📝 长文本支持</span>
-            <span class="model-feature">🎨 多模态</span>
-          </div>
-        </div>
-
-        <div class="model-card featured">
-          <div class="model-header">
-            <span class="model-name">gemini-2.5-flash</span>
-            <span class="model-badge">⚡ 最快</span>
-          </div>
-          <p class="model-description">
-            响应速度极快的高性能模型，在保持出色质量的同时提供毫秒级响应
-          </p>
-          <div class="model-features">
-            <span class="model-feature">🚀 极速响应</span>
-            <span class="model-feature">🔥 高并发</span>
-            <span class="model-feature">💰 成本优化</span>
-          </div>
-        </div>
-
-        <div class="model-card featured">
-          <div class="model-header">
-            <span class="model-name">gemini-2.5-flash-lite</span>
-            <span class="model-badge">🍃 轻量</span>
-          </div>
-          <p class="model-description">
-            轻量级高效模型，资源占用低，适合大规模部署和边缘计算场景
-          </p>
-          <div class="model-features">
-            <span class="model-feature">⏱️ 超低延迟</span>
-            <span class="model-feature">🌱 资源友好</span>
-            <span class="model-feature">📦 批量处理</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 特性介绍 -->
-    <section class="features-section scroll-reveal">
-      <div class="section-header">
-        <h2 class="section-title">为什么选择 Tmoato API</h2>
-        <p class="section-subtitle">公益免费的 API 中转服务</p>
-      </div>
-
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🎁</div>
-          <h3 class="feature-title">超大免费额度</h3>
-          <p class="feature-description">
-            注册即送 5,201,314 Token，公益运营，永久免费，不设付费项
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🚫</div>
-          <h3 class="feature-title">无需充值</h3>
-          <p class="feature-description">
-            不支持充值，不搞付费宣传；以公益为本，简单直达
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🧭</div>
-          <h3 class="feature-title">稳定随缘</h3>
-          <p class="feature-description">
-            稳定性可能波动；保持理性预期，欢迎反馈建议共同改进
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- 终端演示 -->
-    <section class="terminal scroll-reveal" aria-label="终端演示">
-      <div class="terminal-header">
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span class="terminal-dot"></span>
-        <span style="margin-left: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);">terminal</span>
-      </div>
-      <div class="terminal-body" id="terminal"></div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="faq-section scroll-reveal">
-      <div class="section-header">
-        <h2 class="section-title">常见问题</h2>
-        <p class="section-subtitle">快速了解 Tmoato API</p>
-      </div>
-
-      <div class="faq-grid">
-        <details class="faq-item">
-          <summary class="faq-question">
-            支持哪些模型？
-            <span>▼</span>
-          </summary>
-          <div class="faq-answer">
-            <p>主要支持 Gemini 2.5 系列的三个核心模型和部分旧模型：</p>
-            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
-              <li>gemini-2.5-pro - 旗舰模型，功能较全面</li>
-              <li>gemini-2.5-flash - 速度优先，适实时应用</li>
-              <li>gemini-2.5-flash-lite - 轻量高效，资源友好</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            如何开始使用？
-            <span>▼</span>
-          </summary>
-          <div class="faq-answer">
-            <p>三步即可开始：</p>
-            <ol style="margin-top: 0.5rem; padding-left: 1.5rem;">
-              <li>注册账号，自动获得 5,201,314 Token</li>
-              <li>进入令牌管理创建 API 密钥</li>
-              <li>使用提供的 endpoint 和密钥调用 API</li>
-            </ol>
-            <p style="margin-top: 0.5rem;">
-              <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console/token" style="color: var(--accent-primary);" target="_top">
-                立即进入令牌管理 →
-              </a>
-            </p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            是否真的永久免费？
-            <span>▼</span>
-          </summary>
-          <div class="faq-answer">
-            <p>是的，Tmoato API 是公益项目，承诺永久免费。我们不提供任何付费选项，所有用户享受相同的服务。由于是公益运营，稳定性可能会有波动，请理解并合理使用资源。</p>
-          </div>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-question">
-            其他推荐的中转站
-            <span>▼</span>
-          </summary>
-          <div class="faq-answer">
-            <div style="margin-bottom: 1rem;">
-              <strong>"ᖇꫀᧁᖇꫀ"大佬的中转站：</strong><br>
-              <a href="https://drwautdr.ap-southeast-1.clawcloudrun.com" style="color: var(--accent-primary);" target="_top">访问入口</a><br>
-              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
-                API: <span id="regre-api">https://drwautdr.ap-southeast-1.clawcloudrun.com/V1/chat/completions</span>
-              </span>
-              <button class="copy-btn" data-copy="regre-api" style="margin-left: 0.5rem;">复制</button>
+            <div class="flex gap-4 text-sm">
+                <a href="#" class="text-slate-400 hover:text-white transition"><i class="fa-brands fa-github"></i> Version 3.0 (Fusion)</a>
             </div>
-            <div>
-              <strong>小飞鸡大佬的中转站：</strong><br>
-              <a href="http://xfj.2s.ink" style="color: var(--accent-primary);" target="_top">访问入口</a><br>
-              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
-                API: <span id="xfj-api">http://xfj.2s.ink/v1/chat/completions</span>
-              </span>
-              <button class="copy-btn" data-copy="xfj-api" style="margin-left: 0.5rem;">复制</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+
+        <!-- Left Panel: Configuration -->
+        <div class="w-2/3 flex flex-col border-r border-slate-700 bg-slate-800/50 overflow-y-auto custom-scrollbar p-6">
+
+            <!-- 1. Category Selection -->
+            <div class="mb-4">
+                <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-layer-group mr-2"></i>游戏分类</h2>
+                <div class="flex flex-wrap gap-2 border-b border-slate-700 pb-2" id="category-container">
+                    <!-- Categories will be injected here -->
+                </div>
             </div>
-          </div>
-        </details>
-      </div>
-    </section>
-  </div>
 
-  <!-- Footer -->
-  <footer class="footer" role="contentinfo">
-    <div class="wave-bg"></div>
-    <div class="footer-links">
-      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/" class="footer-link" target="_top">首页</a>
-      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console" class="footer-link" target="_top">控制台</a>
-      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/login" class="footer-link" target="_top">登录</a>
-      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/register" class="footer-link" target="_top">注册</a>
-      <a href="https://symjniaw.ap-southeast-1.clawcloudrun.com/console/personal" class="footer-link" target="_top">个人设置</a>
-    </div>
-    <div class="footer-copyright">
-      © <span id="year">2024</span> Tmoato API · 公益项目 · 用爱发电 · symjniaw.ap-southeast-1.clawcloudrun.com
-    </div>
-  </footer>
+            <!-- 2. Game Selection Area -->
+            <div class="mb-8">
+                <!-- Mode Switcher -->
+                <div class="flex items-center justify-between mb-4">
+                     <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-list mr-2"></i>选择游戏</h2>
+                     <div class="flex bg-slate-900 rounded p-1 border border-slate-700">
+                         <button id="mode-single" class="mode-switch-btn active px-4 py-1 text-xs rounded text-slate-400 font-bold hover:text-white" onclick="setMode('single')">
+                             <i class="fa-solid fa-user mr-1"></i> 单体复刻
+                         </button>
+                         <button id="mode-fusion" class="mode-switch-btn px-4 py-1 text-xs rounded text-slate-400 font-bold hover:text-white" onclick="setMode('fusion')">
+                             <i class="fa-solid fa-dna mr-1 text-purple-400"></i> 融合进化
+                         </button>
+                     </div>
+                </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 移除加载动画
-      const loadingOverlay = document.getElementById('loadingOverlay');
-      setTimeout(() => {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => loadingOverlay.style.display = 'none', 500);
-      }, 500);
+                <!-- Fusion Controls (Only visible in fusion mode) -->
+                <div id="fusion-controls" class="hidden mb-4">
+                    <div class="fusion-header p-3 mb-3 relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-2 relative z-10">
+                            <span class="text-xs font-bold text-indigo-200 uppercase"><i class="fa-solid fa-flask mr-1"></i> 已选融合素材</span>
+                            <span class="text-[10px] text-indigo-300 bg-indigo-900/50 px-2 py-0.5 rounded border border-indigo-700" id="fusion-count">0/5</span>
+                        </div>
+                        <div id="selected-games-list" class="flex flex-wrap gap-2 min-h-[30px] relative z-10">
+                            <span class="text-xs text-indigo-400/50 italic py-1">点击下方游戏进行添加...</span>
+                        </div>
 
-      // 年份更新
-      document.getElementById('year').textContent = new Date().getFullYear();
+                        <!-- Fusion Strategy -->
+                        <div class="mt-3 pt-2 border-t border-indigo-500/30 flex gap-4 text-xs text-indigo-200">
+                             <label class="flex items-center cursor-pointer hover:text-white">
+                                 <input type="radio" name="fusion-strat" value="equal" checked class="mr-1 accent-indigo-500">
+                                 <span>⚖️ 均衡融合 (复刻还原所有内容)</span>
+                             </label>
+                             <label class="flex items-center cursor-pointer hover:text-white" title="以第一个选择的游戏为主体">
+                                 <input type="radio" name="fusion-strat" value="main" class="mr-1 accent-indigo-500">
+                                 <span>👑 主体融合 (以首选为主体)</span>
+                             </label>
+                        </div>
+                    </div>
+                </div>
 
-      // 粒子背景
-      const canvas = document.getElementById('particlesCanvas');
-      const ctx = canvas.getContext('2d');
-      let particles = [];
-      
-      function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-      
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-      
-      class Particle {
-        constructor() {
-          this.x = Math.random() * canvas.width;
-          this.y = Math.random() * canvas.height;
-          this.size = Math.random() * 2 + 0.5;
-          this.speedX = (Math.random() - 0.5) * 0.5;
-          this.speedY = (Math.random() - 0.5) * 0.5;
-          this.opacity = Math.random() * 0.5 + 0.2;
-        }
-        
-        update() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-          
-          if (this.x > canvas.width) this.x = 0;
-          if (this.x < 0) this.x = canvas.width;
-          if (this.y > canvas.height) this.y = 0;
-          if (this.y < 0) this.y = canvas.height;
-        }
-        
-        draw() {
-          ctx.fillStyle = `rgba(255, 107, 53, ${this.opacity})`;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      
-      for (let i = 0; i < 50; i++) {
-        particles.push(new Particle());
-      }
-      
-      function animateParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-          p.update();
-          p.draw();
-        });
-        requestAnimationFrame(animateParticles);
-      }
-      
-      if (window.innerWidth > 640) {
-        animateParticles();
-      }
+                <!-- Search & Custom Input -->
+                <div class="flex gap-3 mb-3">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="game-search" placeholder="搜索游戏库..."
+                            class="w-full bg-slate-900 border border-slate-600 rounded pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition shadow-sm">
+                    </div>
+                    <div class="relative w-1/3">
+                        <input type="text" id="custom-game-input" placeholder="输入自定义游戏..."
+                            class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition shadow-sm">
+                    </div>
+                </div>
 
-      // 主题切换
-      const themeToggle = document.getElementById('themeToggle');
-      const html = document.documentElement;
-      const sunIcon = document.getElementById('sunIcon');
-      const moonIcon = document.getElementById('moonIcon');
+                <!-- Game Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar" id="games-grid">
+                    <!-- Games will be injected here -->
+                </div>
+            </div>
 
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      html.setAttribute('data-theme', savedTheme);
-      updateThemeIcon(savedTheme);
+            <!-- 3. Complexity Level -->
+            <div class="mb-8">
+                <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-gauge-high mr-2"></i>复刻深度 (Complexity)</h2>
+                <div class="grid grid-cols-3 gap-3" id="complexity-grid">
+                    <!-- Levels injected here -->
+                </div>
+            </div>
 
-      themeToggle.addEventListener('click', () => {
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-      });
+            <!-- 4. Modifiers (Version, Style & Tech) -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                 <div>
+                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-code-branch mr-2"></i>游戏版本</h2>
+                    <select id="game-version" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:border-blue-500 outline-none">
+                        <option value="">🚫 原版 (无需额外提示)</option>
+                        <option value="simplified">✨ 简化版 (Simplified)</option>
+                        <option value="extended">➕ 扩展版 (Extended)</option>
+                        <option value="specialized">🎯 特化版 (Specialized)</option>
+                        <option value="modded">🛠️ 魔改版 (Modded)</option>
+                        <option value="2d">🟦 2D 版本 (2D Edition)</option>
+                        <option value="3d">🧊 3D 版本 (3D Edition)</option>
+                        <option value="pixel">👾 像素重制版 (Pixel Remake)</option>
+                        <option value="demake">📉 复古降级版 (Demake)</option>
+                        <option value="webgl">🚀 WebGL 加强版</option>
+                        <option value="text">📄 纯文字版 (Text Based)</option>
+                        <option value="mobile">📱 移动端竖屏版</option>
+                    </select>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-palette mr-2"></i>视觉风格</h2>
+                    <select id="visual-style" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:border-blue-500 outline-none">
+                        <option value="">🚫 默认/不指定</option>
+                        <option value="original">🛡️ 忠实还原原作 (Authentic)</option>
+                        <option value="neon">🌆 赛博朋克霓虹 (Cyberpunk Neon)</option>
+                        <option value="pixel">👾 复古像素艺术 (Retro Pixel Art)</option>
+                        <option value="minimal">⚪ 极简主义现代 (Minimalist Modern)</option>
+                        <option value="ascii">💻 极客 ASCII 字符 (ASCII Terminal)</option>
+                        <option value="sketch">✏️ 手绘草图风格 (Hand-Drawn Sketch)</option>
+                        <option value="dark">🌑 暗黑模式 UI (Dark Mode UI)</option>
+                    </select>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-code mr-2"></i>技术栈倾向</h2>
+                    <select id="tech-stack" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm focus:border-blue-500 outline-none">
+                        <option value="">🚫 默认/不指定</option>
+                        <option value="auto">🤖 AI 自动选择最佳方案</option>
+                        <option value="canvas">🎨 HTML5 Canvas API</option>
+                        <option value="dom">🧱 DOM 元素操作</option>
+                        <option value="svg">📐 SVG 矢量图形</option>
+                        <option value="three">🧊 Three.js (3D)</option>
+                    </select>
+                </div>
+            </div>
 
-      // 快捷键 S 切换主题
-      document.addEventListener('keydown', (e) => {
-        if (e.key.toLowerCase() === 's' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
-          themeToggle.click();
-        }
-      });
+             <!-- 5. General Requirements (Customizable) -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-3">
+                     <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-list-check mr-2"></i>通用要求 (General)</h2>
+                     <button id="toggle-all-reqs" class="text-[10px] text-blue-400 hover:text-blue-300 font-bold">全选 / 全不选</button>
+                </div>
 
-      function updateThemeIcon(theme) {
-        if (theme === 'light') {
-          sunIcon.style.display = 'block';
-          moonIcon.style.display = 'none';
-        } else {
-          sunIcon.style.display = 'none';
-          moonIcon.style.display = 'block';
-        }
-      }
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="new-req-input" placeholder="添加自定义要求 (如: 必须包含背景音乐)..."
+                        class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-1 text-xs text-white focus:outline-none focus:border-blue-500 transition">
+                    <button id="add-req-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold transition">
+                        <i class="fa-solid fa-plus"></i> 添加
+                    </button>
+                </div>
 
-      // 配色风格切换
-      const savedAccent = localStorage.getItem('accent') || 'sunset';
-      html.setAttribute('data-accent', savedAccent);
-      document.querySelectorAll('.accent-dot').forEach(dot => {
-        dot.setAttribute('aria-pressed', dot.dataset.accent === savedAccent ? 'true' : 'false');
-        dot.addEventListener('click', () => {
-          const val = dot.dataset.accent;
-          html.setAttribute('data-accent', val);
-          localStorage.setItem('accent', val);
-          document.querySelectorAll('.accent-dot').forEach(d => d.setAttribute('aria-pressed', d === dot ? 'true' : 'false'));
-        });
-      });
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 p-3 bg-slate-900 rounded border border-slate-700" id="requirements-grid">
+                    <!-- Checkboxes injected here -->
+                </div>
+            </div>
 
-      // 复制功能
-      document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const targetId = this.getAttribute('data-copy');
-          const targetElement = document.getElementById(targetId);
-          if (!targetElement) return;
+        </div>
 
-          const text = targetElement.textContent;
-          navigator.clipboard.writeText(text).then(() => {
-            flashButton(this);
-          }).catch(() => {
-            const textarea = document.createElement('textarea');
-            textarea.value = text; 
-            textarea.style.position = 'fixed'; 
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea); 
-            textarea.select(); 
-            document.execCommand('copy'); 
-            document.body.removeChild(textarea);
-            flashButton(this);
-          });
-        });
-      });
+        <!-- Right Panel: Output & Preview -->
+        <div class="w-1/3 bg-slate-900 flex flex-col p-6 shadow-inner">
+            <h2 class="text-sm font-bold text-blue-400 uppercase mb-4 tracking-wider flex items-center justify-between">
+                <span><i class="fa-solid fa-terminal mr-2"></i>生成的提示词 (Prompt)</span>
+                <span id="token-estimate" class="text-xs text-slate-500 font-normal">Est. output: Medium</span>
+            </h2>
 
-      function flashButton(btn) {
-        const originalText = btn.textContent;
-        btn.textContent = '✅ 已复制';
-        btn.style.background = 'var(--accent-gradient)';
-        btn.style.color = 'white';
-        btn.style.borderColor = 'transparent';
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = '';
-          btn.style.color = '';
-          btn.style.borderColor = '';
-        }, 1800);
-      }
+            <div class="flex-1 relative mb-4 group">
+                <textarea id="output-prompt"
+                    class="w-full h-full bg-slate-800 text-slate-300 p-4 rounded-lg border border-slate-700 mono-font text-sm focus:outline-none focus:border-blue-500 resize-none leading-relaxed"
+                    readonly></textarea>
+                <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition duration-300">
+                    <button id="copy-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded shadow-lg text-sm font-bold flex items-center gap-2">
+                        <i class="fa-regular fa-copy"></i> 复制提示词
+                    </button>
+                </div>
+            </div>
 
-      // 终端动画
-      const terminal = document.getElementById('terminal');
-      if (terminal) {
-        const commands = [
-          '$ curl -X POST https://symjniaw.ap-southeast-1.clawcloudrun.com/v1/chat/completions \\',
-          '  -H "Authorization: Bearer YOUR_API_KEY" \\',
-          '  -H "Content-Type: application/json" \\',
-          '  -d \'{"model": "gemini-2.5-pro", "messages": [{"role": "user", "content": "Hello!"}]}\'',
-          '',
-          'HTTP/1.1 200 OK',
-          'Content-Type: application/json',
-          '',
-          '{',
-          '  "id": "chatcmpl-abc123",',
-          '  "object": "chat.completion",',
-          '  "created": 1234567890,',
-          '  "model": "gemini-2.5-pro",',
-          '  "choices": [',
-          '    {',
-          '      "index": 0,',
-          '      "message": {',
-          '        "role": "assistant",',
-          '        "content": "你好！有什么可以帮助你的吗？"',
-          '      },',
-          '      "finish_reason": "stop"',
-          '    }',
-          '  ],',
-          '  "usage": {',
-          '    "prompt_tokens": 10,',
-          '    "completion_tokens": 20,',
-          '    "total_tokens": 30',
-          '  }',
-          '}'
+            <!-- Saved/History Section -->
+            <div class="h-1/3 border-t border-slate-800 pt-4 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase">历史记录</h3>
+                    <button id="clear-history" class="text-xs text-red-400 hover:text-red-300">清空</button>
+                </div>
+                <div id="history-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+                    <!-- History items -->
+                    <div class="text-slate-600 text-xs text-center mt-4">暂无历史记录</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Database (Same as before) ---
+        const gamesDB = {
+    "🕹️ 街机重构": [
+        "贪吃蛇 (Snake)", "吃豆人 (Pac-Man)", "太空侵略者 (Space Invaders)", "打砖块 (Breakout)",
+        "乓 (Pong)", "青蛙过河 (Frogger)", "大金刚 (Donkey Kong)", "俄罗斯方块 (Tetris)",
+        "小蜜蜂 (Galaga)", "导弹指挥官 (Missile Command)", "坦克大战 (Battle City)", "炸弹人 (Bomberman)",
+        "雪人兄弟 (Snow Bros)", "淘金者 (Lode Runner)", "Q*bert", "1942", "送报童 (Paperboy)",
+        "魂斗罗 (Contra)", "合金弹头 (Metal Slug)", "马戏团 (Circus Charlie)", "吃豆人小姐 (Ms. Pac-Man)",
+        "防御者 (Defender)", "泡泡龙 (Puzzle Bobble)", "弹珠台 (Pinball)", "挖掘机 (Dig Dug)",
+        "双截龙 (Double Dragon)", "快打旋风 (Final Fight)", "敲冰块 (Ice Climber)", "影子传说 (Legend of Kage)",
+        "马里奥医生 (Dr. Mario)", "大蜜蜂 (Galaxian)", "怒之铁拳 (Streets of Rage)", "忍者神龟 (TMNT)",
+        "辛普森一家 (Simpsons)", "落日骑士 (Sunset Riders)", "暴力摩托 (Road Rash)", "VR特警 (Virtua Cop)",
+        "死亡之屋 (House of the Dead)", "疯狂出租车 (Crazy Taxi)", "涂鸦小子 (Jet Set Radio)",
+        "合金装备 (Metal Gear)", "洛克人 (Mega Man)", "太空哈利 (Space Harrier)", "OutRun",
+        "After Burner", "战斧 (Golden Axe)", "兽王记 (Altered Beast)", "R-Type", "沙罗曼蛇 (Gradius)",
+        "划线 (Qix)", "汉堡时间 (BurgerTime)", "猫捉老鼠 (Mappy)", "杆位 (Pole Position)",
+        "电子世界争霸战 (Tron)", "盖特勒 (Gauntlet)", "毁灭 (Rampage)", "鸵鸟骑士 (Joust)",
+        "小行星 (Asteroids)", "蜈蚣 (Centipede)", "暴风雨 (Tempest)",
+        "恐龙快打 (Cadillacs and Dinosaurs)", "名将 (Captain Commando)", "圆桌骑士 (Knights of the Round)",
+        "吞食天地 (Warriors of Fate)", "惩罚者 (The Punisher)", "西游释厄传 (Oriental Legend)",
+        "三国战纪 (Knights of Valour)", "拳皇97 (The King of Fighters '97)", "侍魂 (Samurai Shodown)",
+        "饿狼传说 (Fatal Fury)", "月华剑士 (The Last Blade)", "豪血寺一族 (Power Instinct)",
+        "彩京战机 (Strikers 1945)", "雷电 (Raiden)", "首领蜂 (DonPachi)", "斑鸠 (Ikaruga)",
+        "电梯大战 (Elevator Action)", "功夫 (Kung-Fu Master)", "成龙踢馆 (Spartan X)",
+        "高桥名人冒险岛 (Adventure Island)", "松鼠大作战 (Chip 'n Dale)", "三目童子 (The Three Eyes)",
+        "赤色要塞 (Jackal)", "绿色兵团 (Rush'n Attack)", "荒野大镖客 (Gun.Smoke)",
+        "黄金矿工 (Gold Miner)", "森林冰火人 (Fireboy and Watergirl)", "狂扁小朋友 (Dad 'n Me)",
+        "闪客快打 (Crazy Flasher)", "死神VS火影 (Bleach vs Naruto)", "Q版泡泡堂 (BNB)",
+        "热血高校 (River City Ransom)", "双子星 (TwinBee)", "炸弹人杰克 (Mighty Bomb Jack)",
+        "南极大冒险 (Antarctic Adventure)", "七宝奇谋 (The Goonies)", "打气球 (Balloon Fight)",
+        "越野机车 (Excitebike)", "功夫小子 (Yie Ar Kung-Fu)", "忍者哈特利 (Ninja Hattori)",
+        "小叮当 (Doraemon)", "星之卡比 (Kirby's Adventure)", "大力水手 (Popeye)",
+        "是男人就下100层 (NS-Shaft)", "小朋友齐打交 (Little Fighter 2)", "格斗纹章 (Battle High 2)",
+        "赤影战士 (Kage)", "忍者蛙 (Battletoads)", "踢王 (Kick Master)", "柯纳米世界 (Konami Wai Wai World)",
+        "怪鸭历险记 (Darkwing Duck)", "菲力猫 (Felix the Cat)", "raf world (Journey to Silius)",
+        "中华大仙 (Chuka Taisen)", "中东战争 (Silkworm)", "联合大作战 (Silkworm)",
+        "鳄鱼先生 (The Adventures of Bayou Billy)", "人间兵器 (Human Weapon)",
+        "变身忍者 (Shadow Force)", "暴力风暴 (Violent Storm)", "铁钩船长 (Hook)",
+        "龙与地下城：毁灭之塔 (D&D: ToD)", "龙与地下城：暗黑秘影 (D&D: SoM)",
+        "异形大战铁血战士 (Alien vs. Predator)", "战斗回路 (Battle Circuit)", "机甲战士 (Armored Warriors)",
+        "三个奇迹 (Three Wonders)", "雪山兄弟2 (Snow Bros 2)", "吸尘器小子 (Tumblepop)",
+        "饮食天地 (Food Fight)", "午夜杀生 (Night Slashers)", "零组特攻队 (Zero Team)",
+        "战国传承3 (Sengoku 3)", "合金弹头X (Metal Slug X)", "合金弹头3 (Metal Slug 3)",
+        "拳皇98 (KOF 98)", "拳皇2002 (KOF 2002)", "街头霸王II (Street Fighter II)",
+        "超级街头霸王II (Super SF II)", "少年街霸 (Street Fighter Alpha)", "恶魔战士 (Darkstalkers)",
+        "口袋战士 (Pocket Fighter)", "漫威VS卡普空 (Marvel vs. Capcom)", "X战警：磁场原子人 (X-Men: CotA)",
+        "打击者1945 II (Strikers 1945 II)", "武装飞鸟 (Gunbird)", "战国之刃 (Tengai)",
+        "怒首领蜂大往生 (DoDonPachi DaiOuJou)", "虫姬 (Mushihime-sama)", "死亡微笑 (Deathsmiles)",
+        "雷电DX (Raiden DX)", "威虎战机 (Varth)", "究极虎 (Twin Cobra)",
+        "企鹅兄弟 (Penguin Brothers)", "泡泡龙2 (Puzzle Bobble 2)", "超强魔法泡泡 (Magical Drop)",
+        "街头篮球 (Street Hoop)", "得点王 (Super Sidekicks)", "VR射手 (Virtua Striker)",
+        "化解危机 (Time Crisis)", "幽灵小队 (Ghost Squad)", "洛杉矶机枪 (LA Machineguns)",
+        "终结者2 (Terminator 2 Arcade)", "侏罗纪公园 (Jurassic Park Arcade)",
+        "忍者棒球 (Ninja Baseball Bat Man)", "暴力刑警 (Undercover Cops)", "电精 (Guardians)",
+        "美少女战士 (Sailor Moon Arcade)", "天蚕变 (Gals Panic)", "上海 (Shanghai)",
+        "敲冰块 (Ice Climber) FC版", "越野机车 (Excitebike) FC版", "成龙之龙 (Jackie Chan)",
+        "快乐猫 (Mappy)", "挖金子 (Dig Dug II)", "炸弹人 (Bomberman Jack)",
+        "彩虹岛 (Rainbow Islands)", "新西兰故事 (The NewZealand Story)", "泡泡龙 (Bubble Bobble)",
+        "奇迹男孩 (Wonder Boy)", "高桥名人的冒险岛2", "高桥名人的冒险岛3", "高桥名人的冒险岛4",
+        "热血硬派 (Nekketsu Kouha Kunio-kun)", "热血格斗传说", "热血物语", "热血足球", "热血行进曲",
+        "双截龙2 (Double Dragon II)", "双截龙3 (Double Dragon III)", "忍者龙剑传2", "忍者龙剑传3",
+        "超级马里奥兄弟3 (Super Mario Bros 3)", "超级马里奥世界 (Super Mario World)",
+        "索尼克2 (Sonic the Hedgehog 2)", "索尼克3 & Knuckles", "火枪英雄 (Gunstar Heroes)",
+        "怒之铁拳2 (Streets of Rage 2)", "怒之铁拳3 (Streets of Rage 3)", "光之力量 (Shining Force)",
+        "梦幻之星IV (Phantasy Star IV)", "漫画地带 (Comix Zone)", "战斧2 (Golden Axe II)",
+        "兽王记 (Altered Beast)", "蚯蚓吉姆 (Earthworm Jim)", "阿拉丁 (Aladdin Genesis)",
+        "狮子王 (The Lion King)", "蝙蝠侠 (Batman NES)", "蝙蝠侠归来 (Batman Returns)",
+        "忍者神龟3 (TMNT 3)", "踢王 (Kick Master)", "特救指令 (Shatterhand)",
+        "赤影战士 (Kage)", "最终幻想1-6 (Final Fantasy Pixel)", "勇者斗恶龙1-6 (Dragon Quest)",
+        "重装机兵 (Metal Max)", "吞食天地2 (Destiny of an Emperor)", "霸王的大陆",
+        "战场之狼 (Commando)", "战场之狼II (Mercs)", "异形战机 (R-Type II)", "最后忍道 (Ninja Spirit)",
+        "神奇小子 (Wonder Boy in Monster Land)", "神奇小子3 (Dragon's Trap)", "神奇小子4 (Monster World IV)",
+        "亚格斯战士 (Rygar)", "恶魔城 (Haunted Castle)", "大魔界村 (Ghouls 'n Ghosts)", "超魔界村 (Super Ghouls 'n Ghosts)",
+        "出击飞龙 (Strider)", "雷霆战机 (Thunder Force III)", "雷霆战机IV (Thunder Force IV)", "闪电出击 (Lightening Force)",
+        "四国战机 (Aero Fighters)", "四国战机2 (Aero Fighters 2)", "四国战机3 (Aero Fighters 3)",
+        "合金弹头4 (Metal Slug 4)", "合金弹头5 (Metal Slug 5)", "合金弹头6 (Metal Slug 6)", "合金弹头XX",
+        "拳皇99 (KOF 99)", "拳皇2000 (KOF 2000)", "拳皇2001 (KOF 2001)", "拳皇2003 (KOF 2003)", "拳皇XI (KOF XI)",
+        "街头霸王III：三度冲击 (Street Fighter III: 3rd Strike)", "超级街霸IV (Super SF IV Arcade)",
+        "卡普空VS斯内克 (Capcom vs. SNK 2)", "SNK VS 卡普空 (SVC Chaos)", "豪血寺一族2", "豪血寺一族3",
+        "月华剑士2 (The Last Blade 2)", "狼之印记 (Garou: Mark of the Wolves)", "龙虎之拳 (Art of Fighting)",
+        "天外魔境真传 (Kabuki Klash)", "霸王忍法帖 (Ninja Master's)", "世界英雄 (World Heroes Perfect)",
+        "爆裂人 (Breakers Revenge)", "痛快GANGAN进行曲 (Aggressors of Dark Kombat)", "风云默示录 (Savage Reign)",
+        "电神魔傀 (Denjin Makai)", "电神魔傀II (Guardians)", "快打旋风2 (Final Fight 2)", "快打旋风3 (Final Fight 3)",
+        "名将 (Captain Commando) SFC版", "圆桌骑士 (Knights of the Round) SFC版", "恐龙快打 (Cadillacs) 模拟器版",
+        "暴力摩托2 (Road Rash 2)", "暴力摩托3 (Road Rash 3)", "暴力摩托3D (Road Rash 3D)",
+        "VR战士 (Virtua Fighter)", "VR战士2", "VR战士3", "铁拳 (Tekken)", "铁拳2", "铁拳3", "铁拳TT",
+        "刀魂 (Soul Edge)", "灵魂能力 (SoulCalibur)", "死或生 (Dead or Alive)", "死或生2",
+        "能量宝石 (Power Stone)", "能量宝石2", "私立正义学园 (Rival Schools)", "星际格斗 (Star Gladiator)",
+        "乔乔奇妙冒险：未来遗产 (JoJo's Bizarre Adventure)", "机动战士高达：连邦VS吉翁", "高达VS高达",
+        "头文字D Arcade Stage", "湾岸午夜极速 (Wangan Midnight Maximum Tune)", "世嘉拉力 (Sega Rally)",
+        "疯狂出租车2 (Crazy Taxi 2)", "疯狂出租车3 (Crazy Taxi 3)", "18轮大卡车 (18 Wheeler)",
+        "僵尸复仇 (Zombie Revenge)", "炸药刑警 (Dynamite Deka)", "SpikeOut",
+        "太鼓达人街机版", "吉他英雄街机版", "DDR街机版", "舞力全开街机版", "麦克风 (Karaoke)",
+        "三国志大战 (Sangokushi Taisen)", "高达卡牌对战 (Gundam Card Builder)", "领主之战 (Lord of Vermilion)",
+        "赛马大亨街机版 (StarHorse)", "捕鱼达人街机版", "推币机 (Coin Pusher)", "抓娃娃机 (UFO Catcher)",
+        "打地鼠 (Whac-A-Mole)", "投篮机 (Basketball Machine)", "气垫球 (Air Hockey)",
+        "小精灵大奖赛 (Pac-Man Battle Royale)", "马里奥赛车街机版 (Mario Kart Arcade GP)"
+    ],
+    "🧩 脑暴益智": [
+        "2048", "连连看", "三消 (Match-3)", "扫雷 (Minesweeper)", "推箱子 (Sokoban)", "华容道 (Klotski)",
+        "数独 (Sudoku)", "猜数字 (Mastermind)", "拼图 (Jigsaw)", "找不同 (Spot the Difference)",
+        "你画我猜 (Pictionary)", "汉诺塔 (Towers of Hanoi)", "水管工 (Pipe Dream)", "非类比图 (Picross)",
+        "画线物理 (Draw Physics)", "割绳子 (Cut the Rope)", "纪念碑谷风格 (Monument Valley Style)", "炼金术 (Alchemy)",
+        "俄罗斯方块效应 (Tetris Effect)", "Baba Is You 逻辑", "传送门2D (Portal 2D)", "机械迷城风格",
+        "未上锁的房间风格", "见证者 (The Witness Puzzles)", "多罗弗浪漫 (Dorfromantik Lite)", "筑梦颂 (Townscaper Lite)",
+        "Threes!", "魔方 (Rubik's Cube)", "谁是卧底 (Spyfall)", "海龟汤 (Situation Puzzle)",
+        "密室逃脱 (Escape Room)", "折纸游戏 (Paper Fold)", "光线折射 (Laser Refraction)",
+        "液体分流 (Liquid Sort)", "一笔画 (One Line)", "数字华容道 (Sliding Puzzle)", "单词搜索 (Word Search)",
+        "拼字游戏 (Scrabble)", "迷宫 (Maze)", "七巧板 (Tangram)", "宝石迷阵 (Bejeweled)", "祖玛 (Zuma)",
+        "时空幻境 (Braid Mechanics)", "菲斯 (Fez Mechanics)", "地狱边境 (Limbo Style)", "Inside Style",
+        "人力资源机器 (Logic Puzzle)", "粘粘世界 (World of Goo Physics)", "愤怒的小鸟 (Angry Birds)",
+        "鳄鱼小顽皮爱洗澡 (Fluid Physics)", "佩格跳球 (Peggle)", "涂鸦冒险家 (Typing Adventure)",
+        "疯狂小旅鼠 (Lemmings)", "塔洛斯的法则 (Laser Puzzles)", "反室 (Non-Euclidean)",
+        "超阈限空间 (Perspective Puzzle)", "画中世界 (Tile Logic)",
+        "这里没有游戏 (There Is No Game)", "笼中窥梦 (Moncage)", "绣湖 (Rusty Lake Series)",
+        "机械迷城 (Machinarium)", "植物精灵 (Botanicula)", "银河历险记 (Samorost)",
+        "各种排列 (A Sort of Sorts)", "威尔莫特的仓库 (Wilmot's Warehouse)", "整理生活 (Unpacking)",
+        "文字游戏 (Word Game)", "超级巴克 (Super Buckyball)", "桥梁建筑师 (Poly Bridge)",
+        "蜡笔物理学 (Crayon Physics Deluxe)", "这是我的战争 (Puzzles)", "纸境 (Tengami)",
+        "致命框架 (Framed)", "画中世界 (Gorogoa)", "重返猴岛 (Monkey Island Puzzles)",
+        "未完成的天鹅 (The Unfinished Swan)", "甜甜圈都市 (Donut County)",
+        "羊了个羊 (Sheep a Sheep)", "合成大西瓜 (Merge Watermelon)", "召唤神龙 (Summon Dragon)",
+        "开心消消乐 (Anipop)", "天天爱消除 (Craz3 Match)", "保卫萝卜 (Carrot Fantasy)",
+        "史上最坑爹的游戏 (Troll Face Quest Style)", "脑筋急转弯 (Brain Teasers)", "24点 (24 Game)",
+        "涂鸦上帝 (Doodle God)", "找你妹 (Find Something)", "疯狂猜图 (Guess The Pic)",
+        "水果忍者 (Fruit Ninja)", "五子棋 (Gomoku)", "斗兽棋 (Jungle)", "军棋 (Land Battle Chess)",
+        "大富翁 (Monopoly)", "飞行棋 (Ludo)", "跳棋 (Checkers)", "黑白棋 (Reversi)",
+        "雷顿教授 (Professor Layton Puzzles)", "逆转裁判 (Ace Attorney Logic)", "幽灵诡计 (Ghost Trick)",
+        "魔塔 (Magic Tower)", "整蛊邻居 (Neighbours from Hell)", "植物大战僵尸 (PVZ)",
+        "极限脱出 (Zero Escape Text)", "弹丸论破 (Danganronpa Logic)", "我在7年后等着你 (7 Years From Now)",
+        "To the Moon (Narrative Puzzle)", "Finding Paradise", "Impostor Factory",
+        "大鱼吃小鱼 (Feeding Frenzy)", "连连看3.1 (Kyodai)", "黄金矿工双人版",
+        "茧 (Cocoon)", "动物井 (Animal Well)", "巴别塔圣歌 (Chants of Sennaar)",
+        "取景器 (Viewfinder)", "人类 (Humanity)", "帕特里克的箱子 (Patrick's Parabox)",
+        "金偶像案 (The Case of the Golden Idol)", "奥伯拉丁的回归 (Return of the Obra Dinn)",
+        "史蒂芬的香肠卷 (Stephen's Sausage Roll)", "蛇鸟 (Snakebird)", "怪兽远征 (A Monster's Expedition)",
+        "Baba Is You DLC", "传送门：桥梁建筑师 (Bridge Constructor Portal)",
+        "小小梦魇3 (Little Nightmares 3)", "星球大战：绝地武士 (Jedi Puzzles)",
+        "未上锁的房间4：旧罪 (The Room: Old Sins)", "达芬奇之家 (The House of Da Vinci)",
+        "特工A (Agent A)", "致命框架2 (Framed 2)", "Florence", "艾迪芬奇的记忆 (What Remains of Edith Finch)",
+        "极乐迪斯科 (Disco Elysium - Investigation)", "外星贸易公司 (Offworld Trading Company Puzzle)",
+        "迷你地铁 (Mini Metro)", "迷你高速公路 (Mini Motorways)", "Freeways",
+        "铁路路线 (Railbound)", "高尔夫之巅 (Golf Peaks)", "Inbento",
+        "俄罗斯方块99 (Tetris 99)", "噗哟噗哟 (Puyo Puyo)", "魔法气泡俄罗斯方块 (Puyo Puyo Tetris)",
+        "Lumines", "Meteos", "智龙迷城 (Puzzle & Dragons)", "糖果传奇 (Candy Crush Saga)",
+        "梦幻花园 (Gardenscapes)", "梦幻家园 (Homescapes)", "Toon Blast",
+        "Royal Match", "Merge Dragons", "2048 Plus", "Threes! Free",
+        "数独宇宙 (Sudoku Universe)", "逻辑绘图 (Nonogram)", "杀手：狙击 (Hitman Sniper)",
+        "杀手GO (Hitman GO)", "劳拉GO (Lara Croft GO)", "突出重围GO (Deus Ex GO)",
+        "这是警察 (This Is the Police Puzzles)", "旁观者 (Beholder)", "请出示证件 (Papers, Please Logic)",
+        "Not for Broadcast", "Do Not Feed the Monkeys", "Orwell",
+        "Her Story", "Telling Lies", "Immortality", "隐形守护者 (The Invisible Guardian)",
+        "疑案追声 (Unheard)", "孙美琪疑案", "山村老屋", "纸嫁衣 (Paper Bride)",
+        "纸嫁衣2奘铃村", "纸嫁衣3鸳鸯债", "纸嫁衣4红丝缠", "纸嫁衣5无间梦境",
+        "十三机兵防卫圈 (13 Sentinels Logic)", "幽灵诡计复刻版 (Ghost Trick Remastered)",
+        "大逆转裁判 (The Great Ace Attorney)", "逆转检事 (Ace Attorney Investigations)",
+        "极限脱出：九人游戏 (Zero Escape: The Nonary Games)", "极限脱出：善人死亡", "零时困境",
+        "弹丸论破2 (Danganronpa 2)", "弹丸论破V3", "超侦探事件簿：雾雨谜宫",
+        "恐怖美术馆 (Ib Remake)", "魔女之家MV", "狂父重制版", "杀戮天使 (Angels of Death)",
+        "Omori (Puzzle Elements)", "Yume Nikki (Dream Diary)", "LSD梦境模拟器",
+        "We Were Here (Co-op Puzzle)", "It Takes Two (Co-op Puzzles)", "Tick Tock: A Tale for Two",
+        "Keep Talking and Nobody Explodes", "Pico Park", "只只大冒险 (Biped)",
+        "Human: Fall Flat (Puzzle)", "Gang Beasts (Physics)", "Party Animals (Physics)",
+        "黏黏世界2 (World of Goo 2)", "桥梁建筑师2", "坎巴拉太空计划 (Kerbal Space Program Logic)",
+        "围攻 (Besiege Logic)", "Trailmakers", "Scrap Mechanic",
+        "Factorio (Logic/Design)", "Satisfactory (Optimization)", "Dyson Sphere Program",
+        "Shapez.io", "Mindustry", "Infinifactory", "Opus Magnum",
+        "SpaceChem", "TIS-100", "Shenzhen I/O", "Exapunks",
+        "7 Billion Humans", "Human Resource Machine", "While True: learn()",
+        "Gladiabots", "Screeps", "Bitburner", "Hacknet", "Uplink",
+        "传送门 (Portal)", "传送门2 (Portal 2)", "光子立方 (Photonic)", "量子谜题 (Quantum Conundrum)",
+        "反重力赛车 (Antichamber)", "Q.U.B.E.", "Q.U.B.E. 2", "麦克斯韦的恶魔 (Maxwell's Demon)",
+        "塔洛斯的法则2 (The Talos Principle 2)", "见证者 (The Witness) iOS版", "Myst (神秘岛)", "Riven (神秘岛2)",
+        "Exile (神秘岛3)", "Revelation (神秘岛4)", "End of Ages (神秘岛5)", "Uru: Ages Beyond Myst",
+        "Obduction", "Firmament", "Quern - Undying Thoughts", "Haven Moon",
+        "Xing: The Land Beyond", "The Eyes of Ara", "The House of Da Vinci 2", "The House of Da Vinci 3",
+        "未上锁的房间 (The Room)", "未上锁的房间2 (The Room Two)", "未上锁的房间3 (The Room Three)", "The Room VR",
+        "锈湖：根源 (Rusty Lake: Roots)", "锈湖：天堂岛 (Rusty Lake: Paradise)", "锈湖：旅馆 (Rusty Lake Hotel)",
+        "方块逃脱系列 (Cube Escape)", "白门 (The White Door)", "过去的内在 (The Past Within)",
+        "地狱边境 (Limbo) 手机版", "Inside 手机版", "Little Nightmares 手机版", "Very Little Nightmares",
+        "Creaks (机械迷城团队)", "Happy Game (机械迷城团队)", "Pilgrims (朝圣者)", "Chuchel (脸黑先生)",
+        "Gnog", "Vignettes", "Shadowmatic", "Prune", "Euclidean Lands",
+        "Euclidean Skies", "Splitter Critters", "Old Man's Journey", "Eloh",
+        "Kami 2", "I Love Hue", "I Love Hue Too", "Blendoku", "Blendoku 2",
+        "Color Switch", "Helix Jump", "Stack", "ZigZag", "Crossy Road (Puzzles)",
+        "Disney Tsum Tsum", "LINE Pokopang", "LINE Bubble", "Kakao Friends Pop",
+        "Anipop (开心消消乐) 网页版", "宾果消消消", "天天酷跑 (Puzzle Mode)",
+        "2048 6x6", "2048 8x8", "2048 Hex", "1010!", "Blockudoku", "Woodoku",
+        "Sudoku.com", "Killer Sudoku", "Nonogram.com", "Griddlers Plus",
+        "Pixel Art", "Coloring Book", "Happy Color", "Paint by Number",
+        "Art Puzzle", "Jigsaw Puzzles Real", "Magic Jigsaw Puzzles",
+        "Brain Out", "Brain Test", "Brain Test 2", "Stump Me", "Easy Game",
+        "Dop: Draw One Part", "Dop 2: Delete One Part", "Save the Girl", "Clue Hunter",
+        "Hunter Assassin", "Johnny Trigger", "Stealth Master", "Rescue Cut",
+        "Sand Balls", "Dig This", "Pull the Pin", "Fishdom", "Homescapes (Mini Games)"
+    ],
+    "⚔️ 硬核动作": [
+        "超级马里奥 (Super Mario Bros)", "蔚蓝 (Celeste)", "跳一跳 (Jump Jump)", "像素鸟 (Flappy Bird)",
+        "I Wanna Be The Guy", "涂鸦跳跃 (Doodle Jump)", "掘地求升 (Getting Over It)", "火柴人打架 (Stickman Fight)",
+        "洛克人 (Mega Man)", "恶魔城 (Castlevania)", "忍者龙剑传 (Ninja Gaiden)", "空洞骑士 (Hollow Knight 2D)",
+        "铲子骑士 (Shovel Knight)", "洞穴探险 (Spelunky)", "死亡细胞 (Dead Cells Lite)", "奥日 (Ori Style)",
+        "雨中冒险 (Risk of Rain 2D)", "武士零 (Katana Zero)", "超级肉食男孩 (Super Meat Boy)", "茶杯头 (Cuphead Boss Rush)",
+        "波斯王子 (Prince of Persia Classic)", "索尼克 (Sonic)", "热线迈阿密 (Hotline Miami Top-Down)", "战神 (God of War 2D)",
+        "鬼泣 (Devil May Cry 2D)", "怪物猎人 (Monster Hunter 2D)", "黑暗之魂 (Dark Souls 2D)", "猎天使魔女 (Bayonetta 2D)",
+        "虐杀原形 (Prototype 2D)", "刺客信条 (Assassin's Creed 2D)", "真三国无双 (Dynasty Warriors 2D)",
+        "合金装备 (Metal Gear Solid 2D)", "细胞分裂 (Splinter Cell 2D)", "镜之边缘 (Mirror's Edge 2D)",
+        "泰坦陨落 (Titanfall 2D)", "师父 (Sifu 2D)", "哈迪斯 (Hades Lite)", "只狼 (Sekiro 2D)", "血源诅咒 (Bloodborne 2D)",
+        "艾尔登法环 (Elden Ring 2D)", "仁王 (Nioh 2D)", "尼尔：机械纪元 (NieR: Automata Hacking Game)", "Furi",
+        "泰坦之魂 (Titan Souls)", "挺进地牢 (Enter the Gungeon)",
+        "渎神 (Blasphemous)", "盐与避难所 (Salt and Sanctuary)", "安德百合 (Ender Lilies)",
+        "信使 (The Messenger)", "墨西哥英雄大混战 (Guacamelee!)", "唐老鸭历险记 (DuckTales)",
+        "雷曼 (Rayman)", "古惑狼 (Crash Bandicoot 2D)", "瑞奇与叮当 (Ratchet & Clank 2D)",
+        "旺达与巨像 (Shadow of the Colossus 2D)", "对马岛之魂 (Ghost of Tsushima 2D)",
+        "忍者印记 (Mark of the Ninja)", "武装原型 (Broforce)", "迈阿密热线2 (Hotline Miami 2)",
+        "我的朋友佩德罗 (My Friend Pedro)", "超级鸡马 (Ultimate Chicken Horse)", "鸭王争霸 (Duck Game)",
+        "大乱斗 (Smash Bros 2D)", "街霸 (Street Fighter)", "真人快打 (Mortal Kombat)", "铁拳 (Tekken 2D)",
+        "原神2D (Genshin 2D)", "崩坏3 2D (Honkai Impact 2D)", "暗影格斗 (Shadow Fight)",
+        "火柴人联盟 (League of Stickman)", "忍者必须死 (Ninja Must Die)", "天天酷跑 (Cool Run)",
+        "造梦西游 (Dream West)", "4399动作游戏 (Flash Action Classics)",
+        "苍翼默示录 (BlazBlue 2D)", "罪恶装备 (Guilty Gear 2D)", "龙珠格斗 (Dragon Ball FighterZ 2D)",
+        "火影忍者 (Naruto 2D)", "海贼王 (One Piece 2D)", "死神 (Bleach 2D)",
+        "妖精的尾巴 (Fairy Tail 2D)", "家庭教师 (Reborn 2D)", "全职猎人 (Hunter x Hunter 2D)",
+        "乔乔奇妙冒险 (JoJo 2D)", "成龙之龙 (Jackie Chan)", "彩虹岛 (Rainbow Islands)",
+        "洞窟物语 (Cave Story)", "瓦里奥制造 (WarioWare)", "小小大星球2D (LittleBigPlanet 2D)",
+        "瑞奇与叮当 (Ratchet & Clank 2D)", "波斯王子：时之沙 (Prince of Persia 2D)",
+        "神秘海域2D (Uncharted 2D)", "最后生还者2D (The Last of Us 2D Stealth)",
+        "九日 (Nine Sols)", "小骨：英雄杀手 (Skul: The Hero Slayer)", "网络阴影 (Cyber Shadow)",
+        "披萨塔 (Pizza Tower)", "恶意不息 (No Rest for the Wicked)", "夜族崛起 (V Rising)",
+        "雨中冒险2 (Risk of Rain 2)", "雨中冒险回归 (Risk of Rain Returns)", "吸血鬼幸存者 (Vampire Survivors)",
+        "土豆兄弟 (Brotato)", "20分钟直到黎明 (20 Minutes Till Dawn)", "哈迪斯2 (Hades II)",
+        "战神：诸神黄昏 (GoW Ragnarok 2D)", "黑神话：悟空 (Black Myth: Wukong 2D)", "星刃 (Stellar Blade 2D)",
+        "卧龙：苍天陨落 (Wo Long 2D)", "匹诺曹的谎言 (Lies of P 2D)", "装甲核心6 (Armored Core 6 2D)",
+        "遗迹2 (Remnant 2 TopDown)", "堕落之主 (Lords of the Fallen 2D)", "碧蓝幻想Relink 2D",
+        "波斯王子：失落的王冠 (The Lost Crown)", "银河战士：生存恐惧 (Metroid Dread)", "超级马里奥惊奇 (Mario Wonder)",
+        "星之卡比：探索发现 (Kirby Discovery)", "索尼克：未知边境 (Sonic Frontiers 2D)", "瑞奇与叮当：时空跳转 2D",
+        "奥日与鬼火意志 (Ori and the Will of the Wisps)", "空洞骑士：丝之歌 (Silksong - 期待中)", "渎神2 (Blasphemous 2)",
+        "盐与献祭 (Salt and Sacrifice)", "格里梅的尘埃 (Grime)", "月魄 (Moonscars)",
+        "幽灵之歌 (Ghost Song)", "哈克 (HAAK)", "勇敢的哈克", "暗影火炬城 (F.I.S.T.)",
+        "暖雪 (Warm Snow)", "斩妖Raksasi", "失落城堡 (Lost Castle)",
+        "传说法师 (Wizard of Legend)", "英雄攻城 (Hero Siege)", "挺进地牢2 (Exit the Gungeon)",
+        "以撒的结合：忏悔 (Binding of Isaac: Repentance)", "盗贼遗产2 (Rogue Legacy 2)", "洞穴探险2 (Spelunky 2)",
+        "泰拉瑞亚 (Terraria Boss Rush)", "星界边境 (Starbound Combat)", "瓦尔海姆 (Valheim Combat)",
+        "我的世界：地下城 (Minecraft Dungeons)", "火炬之光 (Torchlight)", "恐怖黎明 (Grim Dawn)",
+        "流放之路 (Path of Exile Lite)", "暗黑破坏神 (Diablo Demake)", "最后纪元 (Last Epoch 2D)",
+        "无主之地3 (Borderlands 3 2D)", "命运2 (Destiny 2 2D)", "星际战甲 (Warframe 2D)",
+        "Apex英雄 (Apex Legends 2D)", "瓦罗兰特 (Valorant 2D)", "守望先锋2 (Overwatch 2 2D)",
+        "任天堂明星大乱斗特别版 (Smash Ultimate)", "街头霸王6 (Street Fighter 6)", "铁拳8 (Tekken 8)",
+        "真人快打1 (Mortal Kombat 1)", "罪恶装备：奋战 (Guilty Gear Strive)", "格兰布鲁幻想VS (GBVSR)",
+        "DNF决斗 (DNF Duel)", "拳皇15 (KOF XV)", "侍魂：晓 (Samurai Shodown 2019)",
+        "月姬格斗 (Melty Blood: Type Lumina)", "夜下出生 (Under Night In-Birth)", "骷髅女孩 (Skullgirls)",
+        "英灵乱战 (Brawlhalla)", "多元宇宙大乱斗 (MultiVersus)", "派对动物 (Party Animals Fighting)",
+        "猛兽派对", "人类一败涂地 (Human Fall Flat Fighting)", "糖豆人 (Fall Guys Platforming)",
+        "正如神之说 (As God Says)", "鱿鱼游戏 (Squid Game 2D)", "爱丽丝疯狂回归 (Alice Madness Returns 2D)",
+        "尼尔：人工生命 (NieR Replicant 2D)", "最终幻想16 (FF16 2D)", "最终幻想7重制版 (FF7R 2D)",
+        "王国之心 (Kingdom Hearts 2D)", "勇者斗恶龙 (Dragon Quest Action)", "传说系列 (Tales of Series 2D)",
+        "伊苏 (Ys Series 2D)", "轨迹系列 (Trails Series Action)", "女神异闻录5乱战 (P5S 2D)",
+        "魔界村 (Ghosts 'n Goblins)", "洛克人X (Mega Man X)", "洛克人Zero (Mega Man Zero)",
+        "恶魔城：月下夜想曲 (Symphony of the Night)", "恶魔城：晓月圆舞曲 (Aria of Sorrow)", "恶魔城：被夺走的刻印 (Order of Ecclesia)",
+        "血污：夜之仪式 (Bloodstained: Ritual of the Night)", "血污：月之诅咒 (Bloodstained: Curse of the Moon)", "赤痕 (Bloodstained)",
+        "桑塔与海盗的诅咒 (Shantae and the Pirate's Curse)", "桑塔：半精灵英雄 (Shantae: Half-Genie Hero)", "桑塔与七塞壬 (Shantae and the Seven Sirens)",
+        "公理边缘 (Axiom Verge)", "公理边缘2 (Axiom Verge 2)", "环境站 (Environmental Station Alpha)",
+        "拉比核糖 (Rabi-Ribi)", "东方月神夜 (Touhou Luna Nights)", "蒂德莉特的奇境冒险 (Record of Lodoss War)",
+        "木乃伊降质 (The Mummy Demastered)", "加托罗博 (Gato Roboto)", "丹达拉 (Dandara)",
+        "Iconoclasts", "Timespinner", "Momodora: 月下遐想", "Minoria",
+        "终结者莉莉 (Ender Lilies)", "Sundered", "Valdis Story: Abyssal City",
+        "Dust: An Elysian Tail", "Muramasa: The Demon Blade (胧村正)", "Odin Sphere (奥丁领域)",
+        "Dragon's Crown (龙之皇冠)", "13 Sentinels (十三机兵战斗部分)", "GrimGrimoire (格林魔书)",
+        "Shank", "Shank 2", "Mark of the Ninja Remastered", "Invisible, Inc.",
+        "Transistor (晶体管)", "Bastion (堡垒)", "Pyre", "Hades (哈迪斯)",
+        "死亡之门 (Death's Door)", "Tunic", "Hob", "Rime",
+        "Hyper Light Drifter", "Solar Ash", "The Pathless", "Abzu",
+        "Journey (风之旅人)", "Flower (花)", "Flow (浮游世界)", "Sky: Children of the Light (光遇)",
+        "风来之国 (Eastward)", "CrossCode (远星物语)", "Owlboy (猫头鹰男孩)", "A Space for the Unbound",
+        "Spiritfarer (灵魂摆渡人)", "Cozy Grove", "Wytchwood", "Potion Permit",
+        "Little Witch in the Woods", "Kena: Bridge of Spirits", "Stray (流浪猫)",
+        "Sifu (师父)", "Absolver", "Midnight Fight Express", "Sleeping Dogs (热血无赖)",
+        "Yakuza 0 (如龙0)", "Yakuza Kiwami (如龙极)", "Judgment (审判之眼)", "Lost Judgment (审判之逝)",
+        "Shenmue (莎木)", "Shenmue II", "Shenmue III", "God Hand (神之手)",
+        "Okami (大神)", "Viewtiful Joe (红侠乔伊)", "MadWorld", "No More Heroes (英雄不再)",
+        "Bayonetta (猎天使魔女)", "Bayonetta 2", "Bayonetta 3", "Vanquish (征服)",
+        "Metal Gear Rising: Revengeance (合金装备崛起：复仇)", "NieR: Automata (尼尔：机械纪元)", "NieR Replicant",
+        "Drakengard 3 (龙背上的骑兵3)", "Astral Chain (异界锁链)", "Scarlet Nexus (绯红结系)"
+    ],
+    "🔫 射击狂潮": [
+        "雷电 (Raiden)", "东方Project (Touhou Bullet Hell)", "反恐精英2D (CS 2D)", "孤胆枪手 (Alien Shooter)",
+        "以撒的结合 (Binding of Isaac)", "坦克动荡 (Tank Trouble)", "百战天虫 (Worms)", "几何战争 (Geometry Wars)",
+        "沙罗曼蛇 (Gradius)", "斑鸠 (Ikaruga Polarity)", "毁灭战士 (Doom Raycasting)",
+        "德军总部 (Wolfenstein 3D)", "守望先锋2D (Overwatch 2D)", "绝地求生2D (PUBG 2D)", "堡垒之夜2D (Fortnite 2D Build)",
+        "喷射战士2D (Splatoon Paint)", "光环2D (Halo 2D)", "核子王座 (Nuclear Throne)", "Luftrausers",
+        "吸血鬼幸存者 (Vampire Survivors)", "土豆兄弟 (Brotato)", "超热 (Superhot Time Mechanic)", "深岩银河2D (Deep Rock Galactic)",
+        "生化危机 (Resident Evil Top Down)", "半条命2D (Half-Life 2D)", "求生之路2D (Left 4 Dead 2D)",
+        "彩虹六号2D (Rainbow Six Tactics)", "Apex 英雄2D", "无主之地2D (Looter Shooter)", "潜行者2D",
+        "地铁2D", "孤岛惊魂2D", "马克思佩恩 (Bullet Time)", "雷神之锤 (Quake 2D)", "战地2D",
+        "军团要塞2D (TF2)", "生化奇兵2D", "战争机器2D", "瓦罗兰特2D (Valorant 2D)",
+        "怒首领蜂 (DoDonPachi)",
+        "逃离塔科夫2D (Tarkov 2D)", "全境封锁2D (The Division)", "命运2D (Destiny)",
+        "收获日2 (Payday 2 Top-Down)", "武装突袭2D (Arma Tactics)", "狙击精英2D (Sniper Elite)",
+        "杀手2D (Hitman Go Style)", "荒野乱斗 (Brawl Stars Web)", "香肠派对 (Sausage Man Web)",
+        "穿越火线 (CrossFire Web)", "三角洲特种部队 (Delta Force)", "荣誉勋章 (Medal of Honor 2D)",
+        "黄金眼007 (GoldenEye 007 2D)", "时空分裂者 (TimeSplitters 2D)", "恐龙猎人 (Turok 2D)",
+        "重返德军总部 (RTCW 2D)", "英雄萨姆 (Serious Sam 2D)", "永远的毁灭公爵 (Duke Nukem 2D)",
+        "虚幻竞技场 (Unreal Tournament 2D)", "赤色战线 (Red Faction 2D)", "星球大战：前线 (Battlefront 2D)",
+        "元气骑士 (Soul Knight)", "比特小队 (Bit Heroes)", "狙击小日本 (Sniper Mission)",
+        "和平精英2D (PUBG Mobile 2D)", "明日之后2D (LifeAfter 2D)", "弓箭传说 (Archero)",
+        "全民飞机大战 (Aircraft Battle)", "雷霆战机 (Thunder Fighter)",
+        "傲气雄鹰 (Sky Force)", "打飞碟 (Clay Pigeon Shooting)", "打鸭子 (Duck Hunt)",
+        "抢滩登陆 (Beach Head)", "血战上海滩 (Shanghai)", "使命召唤 (COD 2D)",
+        "皇牌空战2D (Ace Combat TopDown)", "虫姬 (Mushihime-sama)", "狱门山物语 (Guwange)",
+        "长空超翼神 (Espgaluda)", "大往生 (DoDonPachi DaiOuJou)",
+        "绝地潜兵 (Helldivers Top-Down)", "绝地潜兵2 (Helldivers 2 Top-Down)", "暗黑破坏神4 (Diablo IV Shooter)",
+        "遗迹：灰烬重生 (Remnant)", "异形：火力小队 (Aliens: Fireteam Elite 2D)", "僵尸世界大战 (World War Z 2D)",
+        "喋血复仇 (Back 4 Blood 2D)", "GTFO 2D", "杀戮空间2 (Killing Floor 2 2D)",
+        "收获日3 (Payday 3 2D)", "犯罪老板：摇滚城 (Crime Boss 2D)", "机械战警：暴戾都市 (RoboCop 2D)",
+        "终结者：反抗军 (Terminator 2D)", "阿凡达：潘多拉边境 (Avatar 2D)", "孤岛危机 (Crysis 2D)",
+        "孤岛惊魂6 (Far Cry 6 2D)", "正当防卫4 (Just Cause 4 2D)", "黑道圣徒 (Saints Row 2D)",
+        "看门狗 (Watch Dogs 2D)", "赛博朋克2077 (Cyberpunk 2077 2D)", "星空 (Starfield 2D)",
+        "无人深空 (No Man's Sky Combat)", "精英：危险 (Elite Dangerous Combat)", "星际公民 (Star Citizen 2D)",
+        "EVE Online Combat", "坦克世界 (World of Tanks 2D)", "战舰世界 (World of Warships 2D)",
+        "战争雷霆 (War Thunder 2D)", "装甲战争 (Armored Warfare)", "高达进化 (Gundam Evolution 2D)",
+        "机甲战士5 (MechWarrior 5 2D)", "泰坦陨落2 (Titanfall 2 2D)", "机战佣兵 (Armored Core)",
+        "前线任务 (Front Mission)", "重装机兵 (Metal Max)", "赤色要塞复刻版 (Jackal Remake)",
+        "魂斗罗：加鲁加行动 (Contra: Operation Galuga)", "合金弹头：觉醒 (Metal Slug Awakening)", "茶杯头DLC (Cuphead DLC)",
+        "傲气雄鹰：重雷 (Sky Force Reloaded)", "雷电V (Raiden V)", "斑鸠 (Ikaruga)", "苍穹红莲队",
+        "雷射风暴 (RayStorm)", "G大流士 (G-Darius)", "大流士外传 (Darius Gaiden)",
+        "打击者1999 (Strikers 1999)", "武装飞鸟2 (Gunbird 2)", "战国之刃 (Tengai)",
+        "零式枪手2 (Zero Gunner 2)", "旋光之轮舞 (Senko no Ronde)", "东方红魔乡",
+        "东方妖妖梦", "东方永夜抄", "东方风神录", "东方地灵殿",
+        "挺进地牢 (Enter the Gungeon)", "废土之王 (Nuclear Throne)", "以撒的结合：重生",
+        "雨中冒险2 (Risk of Rain 2)", "合成大西瓜射击版", "羊了个羊射击版",
+        "元气骑士前传", "重生细胞 (Dead Cells)", "霓虹深渊 (Neon Abyss)",
+        "恶果之地 (Juicy Realm)", "比特小队", "我的勇者 (My Heroes)",
+        "弹壳特攻队 (Survivor.io)", "黎明前20分钟", "吸血鬼幸存者手机版",
+        "碧蓝航线 (Azur Lane Shooter)", "少女前线 (Girls' Frontline Combat)", "胜利女神：妮姬 (NIKKE 2D)",
+        "尘白禁区 (Snowbreak 2D)", "卡拉彼丘 (Strinova 2D)", "王牌战士 (Ace Force)",
+        "高能英雄", "香肠派对", "荒野行动", "光荣使命",
+        "毁灭战士：永恒 (Doom Eternal)", "毁灭战士 (Doom 2016)", "雷神之锤2 RTX (Quake II RTX)",
+        "雷神之锤3竞技场 (Quake III Arena)", "虚幻竞技场2004 (UT2004)", "德军总部：新秩序 (Wolfenstein: The New Order)",
+        "德军总部：旧血脉 (Wolfenstein: The Old Blood)", "德军总部：新巨像 (Wolfenstein II)",
+        "掠食 (Prey 2017)", "羞辱 (Dishonored)", "羞辱2 (Dishonored 2)", "死亡循环 (Deathloop)",
+        "孤岛危机重制版 (Crysis Remastered)", "孤岛危机2", "孤岛危机3", "杀出重围：人类革命 (Deus Ex: HR)",
+        "杀出重围：人类分裂 (Deus Ex: MD)", "赛博朋克2077 (Cyberpunk 2077)", "地铁：2033 (Metro 2033)",
+        "地铁：最后的曙光 (Metro Last Light)", "地铁：离去 (Metro Exodus)", "潜行者：切尔诺贝利的阴影 (STALKER)",
+        "潜行者：晴空 (STALKER Clear Sky)", "潜行者：普里皮亚季的召唤 (STALKER CoP)", "潜行者2 (STALKER 2)",
+        "无主之地2 (Borderlands 2)", "无主之地前传 (Borderlands TPS)", "小缇娜的奇幻之地 (Tiny Tina's Wonderlands)",
+        "生化奇兵：无限 (BioShock Infinite)", "生化奇兵1", "生化奇兵2", "系统奇兵 (System Shock Remake)",
+        "半条命 (Half-Life)", "半条命2 (Half-Life 2)", "半条命：爱莉克斯 (Half-Life: Alyx)", "黑山 (Black Mesa)",
+        "军团要塞2 (Team Fortress 2)", "求生之路 (Left 4 Dead)", "求生之路2 (Left 4 Dead 2)",
+        "传送门 (Portal)", "传送门2 (Portal 2)", "泰坦陨落2 (Titanfall 2)", "Apex 英雄",
+        "守望先锋 (Overwatch)", "守望先锋2", "瓦罗兰特 (Valorant)", "CS:GO", "CS2",
+        "彩虹六号：围攻 (Rainbow Six Siege)", "彩虹六号：异种 (Extraction)", "幽灵行动：荒野 (Wildlands)",
+        "幽灵行动：断点 (Breakpoint)", "全境封锁 (The Division)", "全境封锁2 (The Division 2)",
+        "细胞分裂：黑名单 (Splinter Cell Blacklist)", "细胞分裂：断罪 (Conviction)", "细胞分裂：混沌理论 (Chaos Theory)",
+        "合金装备V：幻痛 (MGSV: TPP)", "合金装备V：原爆点 (MGSV: GZ)", "死亡搁浅 (Death Stranding)",
+        "马克思佩恩3 (Max Payne 3)", "量子破碎 (Quantum Break)", "控制 (Control)", "心灵杀手2 (Alan Wake 2)",
+        "荒野大镖客：救赎2 (RDR2)", "GTA V", "GTA IV", "圣安地列斯 (San Andreas)",
+        "黑道圣徒3 (Saints Row The Third)", "黑道圣徒4 (Saints Row IV)", "看门狗2 (Watch Dogs 2)",
+        "正当防卫3 (Just Cause 3)", "疯狂麦克斯 (Mad Max)", "中土世界：暗影魔多 (Shadow of Mordor)",
+        "蝙蝠侠：阿卡姆疯人院 (Arkham Asylum)", "蝙蝠侠：阿卡姆之城 (Arkham City)", "蝙蝠侠：阿卡姆骑士 (Arkham Knight)",
+        "蜘蛛侠 (Marvel's Spider-Man)", "蜘蛛侠：迈尔斯 (Miles Morales)", "银河护卫队 (Guardians of the Galaxy)",
+        "复仇者联盟 (Marvel's Avengers)", "自杀小队 (Suicide Squad)", "哥谭骑士 (Gotham Knights)"
+    ],
+    "🔨 模拟经营": [
+        "我的世界 (Minecraft Voxel)", "饥荒 (Don't Starve Lite)", "缺氧 (Oxygen Not Included Lite)", "深海迷航2D",
+        "木筏求生 (Raft 2D)", "这是我的战争 (This War of Mine)", "环世界 (RimWorld Lite)", "监狱建筑师 (Prison Architect)",
+        "星露谷物语 (Stardew Valley Farming)", "浮岛物语 (Forager)", "英灵神殿2D (Valheim)", "森林2D (The Forest)",
+        "漫漫长夜2D", "辐射避难所 (Fallout Shelter)", "异星工厂 (Factorio Conveyors)",
+        "戴森球计划2D", "过山车大亨 (RollerCoaster Tycoon)", "动物园之星2D",
+        "模拟城市 (SimCity Classic)", "城市天际线2D", "PC组装模拟器",
+        "分手厨房 (Overcooked)", "潜水员戴夫 (Dave the Diver)", "游戏开发大亨 (Game Dev Tycoon)",
+        "网吧模拟器", "主题医院", "模拟人生 (The Sims Lite)",
+        "文明 (Civilization Hex)", "孢子 (Spore Evolution)", "看火人 (Firewatch Narrative)", "欧洲卡车模拟2D",
+        "模拟山羊 (Ragdoll Goat)", "捣蛋鹅 (Untitled Goose Game)", "冲就完事模拟器 (Cleaning Sim)",
+        "超市模拟器", "边境检察官 (Papers, Please)", "外科医生 (Physics Surgery)",
+        "动物森友会 (Animal Crossing Lite)", "群星2D (Stellaris)", "双点医院",
+        "矮人要塞 (ASCII Dwarf)", "幸福工厂2D", "牧场物语",
+        "欧陆风云2D", "十字军之王2D",
+        "冰汽时代 (Frostpunk Lite)", "双点校园 (Two Point Campus)", "侏罗纪世界进化 (Jurassic World)",
+        "动物园大亨 (Zoo Tycoon)", "铁路大亨 (Railroad Tycoon)", "运输大亨 (Transport Tycoon)",
+        "波西亚时光 (My Time at Portia)", "灵魂摆渡人 (Spiritfarer)", "大都会:天际 (Skylines)",
+        "海岛大亨 (Tropico)", "纪元1800 (Anno 1800)", "这是警察 (This Is the Police)",
+        "911接线员 (911 Operator)", "请出示证件 (Papers Please)", "中国式家长",
+        "太吾绘卷 (The Scroll Of Taiwu)", "了不起的修仙模拟器", "大多数 (Nobody)",
+        "房产达人 (House Flipper 2D)", "加油站模拟器", "流浪汉模拟器", "小偷模拟器",
+        "江南百景图 (Jiangnan)", "叫我大掌柜 (Merchant Master)", "梦想城镇 (Township)",
+        "海盗来了 (Pirate Kings)", "开心农场 (Happy Farm)", "摩尔庄园 (Mole's World)", "赛尔号 (Seer)",
+        "奥比岛 (Aobi Island)", "洛克王国 (Roco Kingdom)", "奥拉星 (Aola Star)",
+        "龙斗士 (Dragon Warrior)", "卡布西游 (Kabu West)", "QQ农场 (QQ Farm)",
+        "QQ牧场 (QQ Ranch)", "QQ餐厅 (QQ Restaurant)", "抢车位 (Parking Wars)",
+        "好友买卖 (Friends for Sale)", "昭和杂货店 (Showa Candy Shop)", "食堂故事 (Diner Story)",
+        "游戏发展国 (Game Dev Story)", "温泉物语 (Hot Springs Story)", "合战忍者村 (Ninja Village)",
+        "冒险村物语 (Dungeon Village)", "大江户物语 (Oh! Edo Towns)", "冠军足球物语 (Pocket League Story)",
+        "百货商场物语 (Mega Mall Story)", "名门口袋学院 (Pocket Academy)", "开罗游戏系列 (Kairosoft)",
+        "庄园领主 (Manor Lords)", "风暴之城 (Against the Storm)", "海狸浮生记 (Timberborn)",
+        "帕鲁世界 (Palworld 2D)", "雾锁王国 (Enshrouded 2D)", "夜莺传说 (Nightingale 2D)",
+        "珊瑚岛 (Coral Island)", "沙石镇时光 (My Time at Sandrock)", "旅行者之憩 (Travellers Rest)",
+        "烤肉串模拟器 (Kebab Chefs)", "超市一起开 (Supermarket Together)", "超市模拟器 (Supermarket Simulator)",
+        "网吧模拟器2 (Internet Cafe Simulator 2)", "电竞传奇 (Esports Legend)", "主播模拟器 (Streamer Life)",
+        "便利店开业日记 (Convenience Stories)", "箱庭铁道物语 (Station Manager)", "赛马牧场物语 (Pocket Stables)",
+        "顶级跑马牧场", "创意糕点部 (Bonbon Cakery)", "住宅梦物语 (Dream House Days)",
+        "大航海探险物语 (High Sea Saga)", "英雄基地 (Heropolis)", "像素牧场物语 (8-Bit Farm)",
+        "发现动物公园 (Wild Park Manager)", "游乐园梦物语 (Dream Park Story)", "百货商场物语2",
+        "开罗拉面店 (The Ramen Sensei)", "开罗拉面店2", "晴空农场物语 (Pocket Harvest)",
+        "时尚洋品店 (Pocket Clothier)", "灵犀出版社物语 (Magazine Mogul)", "动画制作物语 (Anime Studio Story)",
+        "社交梦物语 (Social Dev Story)", "蓝天飞行队 (Skyforce Unite!)", "冲刺！赛车物语 (Grand Prix Story)",
+        "冲刺！赛车物语2", "大自然物语 (Fish Pond Park)", "都市大亨物语 (Venture Towns)",
+        "足球俱乐部物语 (Pocket League Story 2)", "网球俱乐部物语 (Tennis Club Story)", "篮球热潮物语 (Basketball Club Story)",
+        "棒球部物语 (Home Run High)", "滑雪白皮书 (Shiny Ski Resort)", "邮轮大纪行 (World Cruise Story)",
+        "星之开罗君 (Kairobotica)", "宇宙探险队 (Epic Astro Story)", "大金字塔王国 (The Pyraplex)",
+        "开拓神秘岛 (Beastie Bay)", "合战忍者村DX", "顶级跑马牧场DX",
+        "模拟火车世界 (Train Sim World)", "模拟飞行 (Flight Simulator 2D)", "模拟农场 (Farming Simulator 2D)",
+        "欧洲卡车模拟2 (Euro Truck Simulator 2)", "美国卡车模拟 (American Truck Simulator)",
+        "雪地奔驰 (SnowRunner 2D)", "泥泞奔驰 (MudRunner 2D)", "远征 (Expeditions 2D)",
+        "施工模拟器 (Construction Simulator)", "消防员模拟器 (Firefighting Simulator)", "警察模拟器 (Police Simulator)",
+        "医生模拟器 (Surgeon Simulator)", "烹饪模拟器 (Cooking Simulator)", "小偷模拟器2",
+        "当铺人生2 (Dealer's Life 2)", "二手车大亨 (Car For Sale)", "加油站大亨 (Gas Station Simulator)",
+        "强力清洗模拟器 (PowerWash Simulator)", "拆解模拟器 (Teardown)", "装机模拟器2 (PC Building Simulator 2)",
+        "房产达人2 (House Flipper 2)", "酒店大亨 (Hotel Renovator)", "餐厅大亨 (Chef Life)",
+        "酿造模拟器 (Brewmaster)", "花园模拟器 (Garden Simulator)", "割草模拟器 (Lawn Mowing Simulator)",
+        "绿色地狱 (Green Hell)", "漫漫长夜 (The Long Dark)", "深海迷航：零度之下 (Subnautica: Below Zero)",
+        "木筏求生 (Raft)", "森林 (The Forest)", "森林之子 (Sons of the Forest)", "异星探险家 (Astroneer)",
+        "无人深空 (No Man's Sky)", "星际公民 (Star Citizen)", "精英：危险 (Elite Dangerous)",
+        "X4: 基石 (X4: Foundations)", "星际迷航：舰桥船员 (Star Trek: Bridge Crew)", "坎巴拉太空计划 (Kerbal Space Program)",
+        "坎巴拉太空计划2", "围攻 (Besiege)", "废品机械师 (Scrap Mechanic)", "泰拉科技 (TerraTech)",
+        "创世战车 (Crossout)", "Robocraft", "Stormworks: Build and Rescue", "From the Depths",
+        "Space Engineers", "Medieval Engineers", "异星工厂 (Factorio)", "幸福工厂 (Satisfactory)",
+        "戴森球计划 (Dyson Sphere Program)", "Mindustry", "Shapez.io", "Infinifactory",
+        "Opus Magnum", "SpaceChem", "TIS-100", "Shenzhen I/O", "Exapunks",
+        "Human Resource Machine", "7 Billion Humans", "While True: learn()", "Gladiabots",
+        "Screeps", "Bitburner", "Hacknet", "Uplink", "PC Building Simulator",
+        "Car Mechanic Simulator 2021", "Tank Mechanic Simulator", "Plane Mechanic Simulator",
+        "Rover Mechanic Simulator", "Mech Mechanic Simulator", "Gunsmith Simulator",
+        "Cooking Simulator", "Thief Simulator", "Bum Simulator", "Drug Dealer Simulator",
+        "Internet Cafe Simulator", "Streamer Life Simulator", "Esports Life Tycoon",
+        "Game Dev Tycoon", "Mad Games Tycoon 2", "Software Inc.", "Startup Company",
+        "Good Company", "Big Pharma", "Project Hospital", "Two Point Hospital",
+        "Two Point Campus", "Theme Hospital (主题医院)", "RollerCoaster Tycoon Classic",
+        "RollerCoaster Tycoon 3", "Planet Coaster (过山车之星)", "Planet Zoo (动物园之星)",
+        "Zoo Tycoon 2", "Jurassic World Evolution 2", "Prehistoric Kingdom",
+        "Megaquarium", "Parkitect", "SimCity 4", "SimCity 2013",
+        "Cities: Skylines", "Cities: Skylines II", "Workers & Resources: Soviet Republic",
+        "Tropico 6 (海岛大亨6)", "Anno 1800 (纪元1800)", "Anno 1404", "Banished (放逐之城)",
+        "Frostpunk (冰汽时代)", "Frostpunk 2", "Ixion", "Surviving Mars",
+        "Surviving the Aftermath", "Endzone - A World Apart", "Timberborn (海狸浮生记)",
+        "Foundation", "Ostriv", "Kingdoms and Castles", "Going Medieval",
+        "Becastled", "Diplomacy is Not an Option", "Manor Lords (庄园领主)",
+        "Mount & Blade II: Bannerlord (骑砍2)", "Kenshi", "RimWorld (环世界)",
+        "Dwarf Fortress (矮人要塞)", "Prison Architect (监狱建筑师)", "Academia: School Simulator",
+        "RimWorld Biotech", "RimWorld Ideology", "RimWorld Royalty"
+    ],
+    "🃏 策略卡牌": [
+        "杀戮尖塔 (Slay the Spire)", "小丑牌 (Balatro)", "炉石传说 (Hearthstone Lite)", "皇室战争 (Clash Royale)",
+        "自走棋 (Auto Chess)", "黑帝斯 (Hades)", "植物大战僵尸 (PVZ)", "保卫萝卜 (Carrot Fantasy)",
+        "王国保卫战 (Kingdom Rush)", "气球塔防 (Bloons TD)", "全面战争 (Total War Tactics)",
+        "红色警戒 (Red Alert RTS)", "星际争霸 (StarCraft RTS)", "帝国时代 (Age of Empires)", "陷阵之志 (Into the Breach)",
+        "循环勇者 (Loop Hero)", "绝境北方 (Bad North)", "暗黑地牢 (Darkest Dungeon Combat)", "邪恶冥刻 (Inscryption)",
+        "怪物火车 (Monster Train)", "三国杀", "UNO", "大富翁 (Monopoly)",
+        "游戏王 (Yu-Gi-Oh)", "昆特牌 (Gwent)", "德州扑克 (Texas Hold'em)", "万智牌 (Magic: The Gathering)",
+        "云顶之弈 (TFT)", "英雄无敌 (Heroes of Might and Magic)", "火焰纹章 (Fire Emblem Grid)",
+        "高级战争 (Advance Wars)", "幽浮 (XCOM Tactics)", "瘟疫公司 (Plague Inc.)",
+        "符文大地传说", "Artifact", "狼人杀",
+        "斗地主", "欺诈之地 (Griftlands)",
+        "刀塔自走棋 (Dota Auto Chess)", "漫威终极逆转 (Marvel Snap)", "影之诗 (Shadowverse)",
+        "宝可梦TCG (Pokémon TCG)", "展翅翱翔 (Wingspan)", "卡坦岛 (Catan)", "车票之旅 (Ticket to Ride)",
+        "爆炸猫 (Exploding Kittens)", "密室逃脱：卡牌版", "阿瓦隆 (Avalon)", "剧本杀 (Murder Mystery)",
+        "魔兽争霸3 (Warcraft III)", "命令与征服 (Command & Conquer)", "最高指挥官 (Supreme Commander)",
+        "家园 (Homeworld 2D)", "这是我的战争：图板游戏", "瘟疫传说", "北方之魂",
+        "英雄联盟电竞经理", "足球经理 (Football Manager Text)", "三国志 (Romance of the Three Kingdoms)",
+        "信长之野望 (Nobunaga's Ambition)", "大战略 (Grand Strategy)", "钢铁雄心 (Hearts of Iron Map)",
+        "月圆之夜 (Night of Full Moon)", "阴阳师 (Onmyoji Lite)", "王者荣耀 (Honor of Kings Strategy)",
+        "欢乐斗地主 (Happy Landlord)", "麻将 (Mahjong)", "中国象棋 (Chinese Chess)", "围棋 (Go)",
+        "部落冲突 (Clash of Clans)", "海岛奇兵 (Boom Beach)", "列王的纷争 (Clash of Kings)",
+        "率土之滨 (Immortal Conquest)", "三国志战略版 (Three Kingdoms Tactics)",
+        "万国觉醒 (Rise of Kingdoms)", "剑与家园 (Art of Conquest)", "苏丹的游戏 (Game of Sultans)",
+        "英雄杀 (Hero Kill)", "谁是卧底 (Who is Spy)", "大富翁10 (Richman 10)",
+        "游戏王：决斗链接 (Duel Links)", "百闻牌 (Onmyoji Card)", "五行师 (Wu Xing Shi)",
+        "雪居之地 (Wildfrost)", "背包乱斗 (Backpack Battles)", "背包英雄 (Backpack Hero)",
+        "星界战士 (Astral Ascent)", "钴蓝核心 (Cobalt Core)", "阿斯特赖亚 (Astrea)",
+        "超时空方舟 (Chrono Ark)", "欺诈之地 (Griftlands)", "污痕圣杯 (Tainted Grail)",
+        "跨越方尖碑 (Across the Obelisk)", "高殿战记 (Gordian Quest)", "无尽航线 (Endless Voyage)",
+        "骰子地下城 (Dicey Dungeons)", "为了吾王 (For The King)", "为了吾王2 (For The King II)",
+        "暗黑地牢2 (Darkest Dungeon II)", "诸神灰烬 (Ash of Gods)", "旗帜的传说 (The Banner Saga)",
+        "圣兽之王 (Unicorn Overlord)", "三角战略 (Triangle Strategy)", "八方旅人 (Octopath Traveler Tactics)",
+        "皇家骑士团：重生 (Tactics Ogre: Reborn)", "最终幻想战略版 (FFT)", "魔界战记 (Disgaea)",
+        "超级机器人大战 (Super Robot Wars)", "战场女武神 (Valkyria Chronicles)", "战争机器：战术小队 (Gears Tactics)",
+        "马里奥疯兔 (Mario + Rabbids)", "幽浮2 (XCOM 2)", "暗夜之子 (Marvel's Midnight Suns)",
+        "战锤40K：机械神教 (Mechanicus)", "废土3 (Wasteland 3)", "神界原罪2 (Divinity: Original Sin 2 Combat)",
+        "博德之门3 (Baldur's Gate 3 Combat)", "索拉斯塔 (Solasta)", "开拓者：正义之怒 (Pathfinder)",
+        "全面战争：战锤3 (Total War: Warhammer III)", "全面战争：三国 (Total War: Three Kingdoms)",
+        "文明6 (Civilization VI)", "人类 (Humankind)", "旧世界 (Old World)",
+        "维多利亚3 (Victoria 3)", "十字军之王3 (Crusader Kings III)", "欧陆风云4 (Europa Universalis IV)",
+        "群星 (Stellaris)", "钢铁雄心4 (Hearts of Iron IV)", "帝国时代2决定版 (AOE II DE)",
+        "帝国时代4 (AOE IV)", "神话时代 (Age of Mythology)", "英雄连3 (Company of Heroes 3)",
+        "家园3 (Homeworld 3)", "沙丘：香料战争 (Dune: Spice Wars)", "北境之地 (Northgard)",
+        "亿万僵尸 (They Are Billions)", "外交不是一种选择 (Diplomacy is Not an Option)",
+        "金铲铲之战 (TFT Mobile)", "酒馆战棋 (Battlegrounds)", "刀塔霸业 (Dota Underlords)",
+        "万智牌：竞技场 (MTG Arena)", "符文大地传说 (LoR)", "游戏王：大师决斗 (Master Duel)",
+        "影之诗：世界 (Shadowverse: Worlds Beyond)", "PTCG Live",
+        "三国杀OL", "三国杀移动版", "英雄杀", "狼人杀官方",
+        "饭局狼人杀", "谁是卧底Online", "剧本杀Online", "百变大侦探",
+        "我是谜", "推理学院", "天黑请闭眼", "鹅鸭杀 (Goose Goose Duck)",
+        "Among Us", "恐惧饥饿 (Dread Hunger)", "欺诈游戏 (Liar's Bar)",
+        "地产大亨 (Monopoly Go)", "富甲天下", "升官图", "强手棋",
+        "万智牌：旅法师对决 (Duels of the Planeswalkers)", "永恒卡牌 (Eternal Card Game)", "上古卷轴：传奇 (The Elder Scrolls: Legends)",
+        "神鬼寓言：财富 (Fable Fortune)", "巫师之昆特牌 (Gwent: The Witcher Card Game)", "Artifact Classic",
+        "Artifact Foundry", "Faeria", "Duelyst", "Duelyst II",
+        "Shardbound", "Minion Masters", "Clash Royale (皇室战争)", "Clash Mini",
+        "Stormbound", "South Park: Phone Destroyer", "Plants vs. Zombies Heroes", "Teppen",
+        "Zenonzard", "Kards - The WWII Card Game", "Horus Heresy: Legions", "Mythgard",
+        "Terraforming Mars (火星殖民)", "Scythe: Digital Edition (镰刀战争)", "Root (茂林源记)", "Wingspan (展翅翱翔)",
+        "Everdell (仙境幽谷)", "Sagrada", "Raiders of the North Sea", "Yellow & Yangtze",
+        "Small World (小世界)", "Carcassonne (卡卡颂)", "Ticket to Ride (车票之旅)", "Splendor (璀璨宝石)",
+        "Pandemic (瘟疫危机)", "Twilight Struggle (冷战热斗)", "Through the Ages (历史巨轮)", "Brass: Birmingham (工业革命)",
+        "Gloomhaven (幽港迷城)", "Spirit Island (灵迹岛)", "Aeon's End (末日决战)", "Sentinels of the Multiverse",
+        "One Deck Dungeon", "Friday", "Solitairica", "Card Thief",
+        "Card Crawl", "Miracle Merchant", "Reigns (王权)", "Reigns: Her Majesty",
+        "Reigns: Game of Thrones", "Cultist Simulator (密教模拟器)", "Book of Hours", "Stacklands (堆叠大陆)",
+        "Voice of Cards: The Isle Dragon Roars", "Voice of Cards: The Forsaken Maiden", "Voice of Cards: The Beasts of Burden",
+        "Dungeon of the Endless", "Endless Legend", "Endless Space 2", "Age of Wonders 4",
+        "Age of Wonders: Planetfall", "SpellForce 3", "Northgard (北境之地)", "Dune: Spice Wars",
+        "Warcraft Rumble (魔兽大作战)", "Marvel Duel (漫威对决)", "Harry Potter: Magic Awakened (哈利波特：魔法觉醒)"
+    ],
+    "🏎️ 极速竞技": [
+        "火箭联盟2D (Rocket League)", "极品飞车2D", "马里奥赛车 (Mode 7 Racing)",
+        "尘埃拉力赛2D", "山脊赛车2D", "FIFA 2D",
+        "NBA 2K 2D", "Wii Sports Tennis", "高尔夫之巅 (Golf Peaks)", "滑雪大冒险 (Ski Safari)",
+        "托尼霍克滑板2D", "QWOP", "台球 (8-Ball Pool)", "空气曲棍球 (Air Hockey)",
+        "F-Zero (Pseudo 3D)", "GT赛车 TopDown", "极限竞速2D", "跑跑卡丁车",
+        "头文字D (Drift Game)", "实况足球2D", "WWE 摔跤2D", "拳击之夜2D", "滑板 (Skate)",
+        "极限国度2D", "特技摩托 (Trials Physics)", "神力科莎2D", "F1 Racing TopDown",
+        "麦登橄榄球2D", "酷飙车神2D", "也就是赛车 (Trackmania 2D)",
+        "火爆狂飙 (Burnout Crash)", "狂野飙车 (Asphalt 2D)", "真实赛车 (Real Racing 2D)",
+        "欧洲卡车模拟 (Euro Truck Sim 2D)", "美国卡车模拟", "旋转轮胎 (Spintires 2D)",
+        "暴力摩托 (Road Rash)", "索尼克赛车", "古惑狼赛车", "暴力赛车 (Carmageddon)",
+        "疯狂出租车 (Crazy Taxi)", "NBA Jam", "热血足球 (Kunio-kun Soccer)", "热血篮球",
+        "网球王子", "灌篮高手", "足球小将", "队长小翼", "职业滑板高手 (Tony Hawk's Pro Skater)",
+        "速降王者 (Descenders 2D)", "孤山速降 (Lonely Mountains: Downhill)", "滑雪大冒险 (Ski Safari)",
+        "疯狂动物园 (Rodeo Stampede)", "神庙逃亡 (Temple Run)", "地铁跑酷 (Subway Surfers)",
+        "天天飞车 (Daily Racing)", "QQ飞车 (QQ Speed)", "登山赛车 (Hill Climb Racing)",
+        "汤姆猫跑酷 (Talking Tom Run)", "滚动的天空 (Rolling Sky)", "跳舞的线 (Dancing Line)",
+        "摩托英豪 (Moto Racer)", "极速摩托 (Traffic Rider)", "地平线 (Forza 2D)",
+        "极品飞车：最高通缉 (NFS Most Wanted)", "狂野飙车9 (Asphalt 9)",
+        "激流快艇 (Riptide GP)", "真实滑板 (True Skate)", "Touchgrind Skate",
+        "特技摩托：前线 (Trials Frontier)", "登山赛车2 (Hill Climb Racing 2)",
+        "拉力赛艺术 (Art of Rally)", "惯性漂移 (Inertial Drift)", "地平线追逐 (Horizon Chase Turbo)",
+        "奥力奥力世界 (OlliOlli World)", "风帆纪元 (Sailing Era)", "滑板城市 (Skate City)",
+        "胶带曲棍球 (Tape to Tape)", "格斗哈拉 (Brawlhalla Sports)", "火箭联盟：擦边球 (Sideswipe)",
+        "极品飞车：不羁 (NFS Unbound 2D)", "极限竞速：地平线5 (Forza Horizon 5 2D)", "GT赛车7 (GT7 2D)",
+        "神力科莎：竞速 (ACC 2D)", "F1 23 2D", "尘埃5 (Dirt 5 2D)",
+        "WRC世代 (WRC Generations 2D)", "达喀尔拉力赛 (Dakar Desert Rally 2D)", "越野摩托 (MX vs ATV)",
+        "骑手共和国 (Riders Republic 2D)", "极限国度 (Steep 2D)", "滑板XL (Skater XL 2D)",
+        "Session: Skate Sim", "托尼霍克：重制版 (THPS 1+2)", "滑板3 (Skate 3)",
+        "FIFA 24 (FC 24 2D)", "eFootball 2D", "NBA 2K24 2D", "Madden 24 2D",
+        "NHL 24 2D", "MLB The Show 24 2D", "PGA Tour 2K23",
+        "WWE 2K24", "AEW Fight Forever", "UFC 5 2D",
+        "拳击俱乐部 (Punch Club)", "格斗经理 (MMA Manager)", "网球世界巡回赛 (Tennis World Tour)",
+        "澳网公开赛 (AO Tennis)", "乒乓球 (Table Tennis Touch)", "羽毛球高高手 (Badminton League)",
+        "台球帝国 (Pool Empire)", "斯诺克明星 (Snooker Stars)", "保龄球王 (Bowling King)",
+        "射箭大师 (Archery Master)", "飞镖大师 (Darts Master)", "钓鱼发烧友 (Ace Fishing)",
+        "钓鱼大对决 (Fishing Clash)", "荒野呼唤：垂钓者 (Call of the Wild: The Angler)", "俄罗斯钓鱼4 (Russian Fishing 4)",
+        "猎人：荒野的呼唤 (theHunter)", "模拟狩猎2 (Hunting Simulator 2)", "滑雪挑战 (Ski Challenge)",
+        "滑雪大冒险2 (Ski Safari 2)", "阿尔托的冒险 (Alto's Adventure)", "阿尔托的奥德赛 (Alto's Odyssey)",
+        "极速变色龙 (Chameleon Run)", "矢量跑酷 (Vector)", "忍者必须死3",
+        "天天酷跑3D", "神庙逃亡2", "地铁跑酷：环球之旅", "索尼克冲刺 (Sonic Dash)",
+        "小黄人快跑 (Minion Rush)", "古惑狼：全速冲锋 (Crash on the Run!)", "超级马里奥酷跑 (Super Mario Run)",
+        "雷曼：丛林探险 (Rayman Jungle Run)", "雷曼：嘉年华 (Rayman Fiesta Run)", "几何冲刺 (Geometry Dash)",
+        "跳舞的球 (Dancing Ball)", "跳舞的线 (Dancing Line)", "滚动的天空 (Rolling Sky)",
+        "永不言弃 (Give It Up!)", "永不言弃2", "永不言弃3", "掘地求升 (Getting Over It)",
+        "Assetto Corsa (神力科莎)", "Assetto Corsa Competizione", "iRacing", "rFactor 2",
+        "Automobilista 2", "Project CARS 2", "Project CARS 3", "RaceRoom Racing Experience",
+        "Live for Speed", "Grand Prix Legends", "Richard Burns Rally", "BeamNG.drive",
+        "Wreckfest (撞车嘉年华)", "FlatOut", "FlatOut 2", "Burnout Paradise (火爆狂飙：天堂)",
+        "Need for Speed: Hot Pursuit (极品飞车：热力追踪)", "Need for Speed: Underground 2", "Need for Speed: Most Wanted (2005)", "Midnight Club 3: DUB Edition",
+        "Midnight Club: Los Angeles", "Test Drive Unlimited", "Test Drive Unlimited Solar Crown", "The Crew (飙酷车神)",
+        "The Crew 2", "The Crew Motorfest", "Driver: San Francisco", "Blur (疾驰残影)",
+        "Split/Second (争分夺秒)", "Pure (纯粹越野)", "Fuel", "MotorStorm (机车风暴)",
+        "Driveclub (驾驶俱乐部)", "Gran Turismo 4", "Gran Turismo 5", "Gran Turismo 6",
+        "Gran Turismo Sport", "Forza Motorsport 4", "Forza Motorsport 7", "Forza Motorsport (2023)",
+        "Mario Kart 8 Deluxe", "Mario Kart Wii", "Mario Kart DS", "Crash Team Racing Nitro-Fueled",
+        "Team Sonic Racing", "Sonic & All-Stars Racing Transformed", "F-Zero GX", "Wipeout Omega Collection",
+        "Redout", "Redout 2", "Fast RMX", "Xenon Racer",
+        "Grip: Combat Racing", "Distance", "Trackmania Nations Forever", "Trackmania Turbo",
+        "Trials Evolution", "Trials Fusion", "Trials Rising", "Urban Trial Playground",
+        "Pumped BMX Pro", "Descenders", "Riders Republic", "Steep",
+        "SSX 3", "SSX Tricky", "Shaun White Snowboarding", "Tony Hawk's Underground",
+        "Tony Hawk's American Wasteland", "Skate 2", "Skate It", "Thrasher: Skate and Destroy",
+        "NBA Street Vol. 2", "NFL Street", "FIFA Street", "Mario Strikers: Battle League",
+        "Mario Tennis Aces", "Mario Golf: Super Rush", "Nintendo Switch Sports", "Wii Sports Resort"
+    ],
+    "🎵 音乐节奏": [
+        "节奏医生 (Rhythm Doctor)", "几何冲刺 (Geometry Dash)", "劲舞团 (Arrow Keys)", "太鼓达人 (Taiko)",
+        "节奏地牢 (Crypt of the NecroDancer)", "OSU! Clicker", "吉他英雄 (Guitar Hero)", "Just Shapes & Beats",
+        "啪嗒砰 (Patapon)", "钢琴块 (Piano Tiles)", "Melatonin", "Hi-Fi Rush 2D", "DDR 跳舞机",
+        "帕拉帕说唱", "节奏天国", "Deemo", "Cytus", "Vib-Ribbon",
+        "Muse Dash", "节奏光剑 (Beat Saber Mouse)", "冰与火之舞 (One Button)", "Thumper",
+        "Sayonara Wild Hearts", "初音未来 (Project DIVA)", "摇滚乐队", "舞力全开",
+        "Voez", "同步音律", "Rez", "Friday Night Funkin'",
+        "音灵 (InvaXion)", "Phigros", "Arcaea", "Lanota", "阳春白雪 (Lyrica)",
+        "跳舞的线 (Dancing Line)", "滚动的天空 (Rolling Sky)", "别踩白块儿", "QQ音速",
+        "劲乐团 (O2Jam)", "DJMAX", "偶像大师", "LoveLive!", "BanG Dream!",
+        "Project Sekai", "重金属：黑格尔 (Metal: Hellsinger 2D)", "节奏海拉鲁 (Cadence of Hyrule)",
+        "战鼓啪打碰 (Patapon)", "应援团 (Ouendan)", "精英节拍特工 (Elite Beat Agents)", "美妙世界 (TWEWY Rhythm)",
+        "不休的音符 (Endless Notes)", "古树旋律 (Deemo)", "兰空VOEZ", "载音 (Zion)",
+        "节奏大师 (Rhythm Master)", "钢琴块2 (Piano Tiles 2)", "偶像梦幻祭 (Ensemble Stars)",
+        "歌之王子殿下 (Uta no Prince-sama)", "催眠麦克风 (Hypnosis Mic)",
+        "劲舞时代 (Au Mobile)", "恋舞OL (Love Dance)", "一起来跳舞",
+        "长号冠军 (Trombone Champ)", "重金属：黑格尔 (Metal: Hellsinger)", "节奏萌芽 (Rhythm Sprout)",
+        "枪火重生 (Gunfire Reborn Rhythm Mode)", "节奏地牢：同步 (Synchrony)", "再见狂野之心 (Sayonara Wild Hearts)",
+        "艾维奇 (Avicii Invector)", "俄罗斯方块效应 (Tetris Effect Connected)", "音频冲浪 (Audiosurf)",
+        "音频冲浪2 (Audiosurf 2)", "旋律避难所 (Melody's Escape)", "节奏医生 (Rhythm Doctor)",
+        "冰与火之舞 (A Dance of Fire and Ice)", "Muse Dash 喵斯快跑", "同步音律喵赛克 (Musync)",
+        "Cytus II", "Deemo II", "VOEZ 兰空", "Kalpa", "Rotaeno 旋转音律",
+        "Paradigm: Reboot", "Orzmic", "Dynamix", "Ravon", "Polytone",
+        "DanceRail3", "Malody", "OSU!Droid", "OSU!Lazer", "Flash Flash Revolution",
+        "StepMania", "Etterna", "Quaver", "McOsu", "Intralism",
+        "ADOFAI", "Sound Voltex (Clone)", "Beatmania IIDX (Clone)", "Pop'n Music (Clone)",
+        "Gitadora (Clone)", "Jubeat (Clone)", "Reflec Beat (Clone)", "Maimai (Clone)",
+        "Chunithm (Clone)", "Ongeki (Clone)", "Wacca (Clone)", "Groove Coaster (Steam)",
+        "Project DIVA Mega Mix+", "初音未来：歌姬计划", "初音未来 VR",
+        "偶像大师：星耀季节", "偶像大师：灰姑娘女孩", "偶像大师：百万现场", "偶像大师：闪耀色彩",
+        "LoveLive! 学园偶像祭", "LoveLive! 全明星", "BanG Dream! 少女乐团派对",
+        "D4DJ Groovy Mix", "世界计划 多彩舞台", "Ensemble Stars!! Music",
+        "IDOLiSH7", "Hypnosis Mic -A.R.B-", "Disney Twisted-Wonderland",
+        "钢琴块3 (Magic Tiles 3)", "跳舞的球 (Dancing Ballz)", "滚动的天空2",
+        "别踩白块儿2", "QQ炫舞", "QQ炫舞手游", "炫舞时代", "恋舞OL",
+        "心舞", "唱舞团", "一起来跳舞", "劲舞团手游", "劲乐团 U",
+        "DJMAX Respect V", "EZ2ON REBOOT : R", "Sixtar Gate: STARTRAIL", "MUSYNX",
+        "Invaxion (音灵)", "TAPSONIC BOLD", "TAPSONIC TOP", "OverRapid",
+        "Hachi Hachi", "Tone Sphere", "Gadvia", "Liminality",
+        "Milthm", "ChainBeeT", "Phigros (鸽游)", "Orzmic",
+        "Rizline", "Cytoid", "Techmania", "K-Shoot Mania",
+        "Unnamed SDVX Clone", "BMS (Be-Music Script)", "Lunatic Rave 2", "beatoraja",
+        "Rhythm Heaven Fever (节奏天国：费沃尔)", "Rhythm Heaven Megamix (节奏天国：精选)", "Rhythm Tengoku (GBA)",
+        "Elite Beat Agents (精英节拍特工)", "Osu! Tatakae! Ouendan (应援团)", "Moero! Nekketsu Rhythm Damashii",
+        "Gitaroo Man (吉他安魂曲)", "Parappa the Rapper (帕拉帕说唱)", "Um Jammer Lammy",
+        "Space Channel 5 (太空频道5)", "Samba de Amigo", "Donkey Konga", "Taiko no Tatsujin: Drum 'n' Fun!",
+        "Hatsune Miku: Project Mirai DX", "Persona 3: Dancing in Moonlight", "Persona 4: Dancing All Night", "Persona 5: Dancing in Starlight",
+        "Kingdom Hearts: Melody of Memory", "Theatrhythm Final Fantasy", "Theatrhythm Dragon Quest", "Melody of Memory",
+        "Cadence of Hyrule", "Crypt of the NecroDancer: AMPLIFIED", "Old School Musical",
+        "Frets on Fire", "Clone Hero", "Yarg", "Rocksmith 2014",
+        "Rocksmith+", "Bandfuse", "Power Gig", "Dj Hero",
+        "Dj Hero 2", "Beatmania", "Beatmania IIDX 30 RESIDENT", "Pop'n Music UniLab",
+        "Gitadora Fuzz-Up", "Jubeat Ave.", "Sound Voltex Exceed Gear", "Nostalgia Op.3",
+        "Dance Dance Revolution A3", "Dance Rush Stardom", "Dancerush", "Maimai DX Festival",
+        "Chunithm Sun", "Ongeki Bright Memory", "Wacca Reverse", "Synchronica",
+        "Crossbeats REV.", "Groove Coaster 4MAX", "Tetote x Connect", "Music Diver"
+    ],
+    "🔮 诡异实验": [
+        "人生重开模拟器", "规则怪谈", "赛博朋克黑客",
+        "文字冒险 (MUD)", "打字游戏 (Typing of the Dead)", "色盲测试", "AI地下城",
+        "心跳文学部 (Visual Novel)", "史丹利的寓言 (Text Adventure)",
+        "主播女孩重度依赖", "不存在的游戏", "验证码模拟器",
+        "后室 (The Backrooms Raycaster)", "玩具熊的五夜后宫 (FNAF Strategy)", "绣湖 (Point & Click)", "去月球",
+        "点击英雄", "Universal Paperclips", "蓝屏模拟器",
+        "加载条模拟器", "桌面破坏王",
+        "电车难题", "谁是爸爸",
+        "手部模拟器", "我是面包", "山 (Mountain)",
+        "饼干点击器", "新手指南", "艾迪芬奇的记忆",
+        "传说之下 (Undertale Battle)", "三角符文", "地球冒险", "梦日记",
+        "LSD梦境模拟器",
+        "小马岛 (Pony Island)", "六角疑云 (Hex)", "亲爱的埃斯特 (Dear Esther)", "光之子 (Child of Light)",
+        "风之旅人 (Journey 2D)", "花 (Flower)", "ABZU 2D", "GRIS", "Inside", "Limbo",
+        "小小梦魇 (Little Nightmares 2D)", "层层恐惧 (Layers of Fear Text)", "SOMA (Text/Puzzle)",
+        "极乐迪斯科 (Disco Elysium Text)", "赛博朋克酒保行动 (VA-11 Hall-A)", "红弦俱乐部 (The Red Strings Club)",
+        "咖啡心语 (Coffee Talk)", "奥伯拉丁的回归 (Return of the Obra Dinn Logic)", "肯塔基0号路 (Kentucky Route Zero)",
+        "作业疯了 (Homework Crazy)", "中国式家长 (Chinese Parents)", "大多数 (Nobody)", "网瘾老年 (Internet Addiction)",
+        "SCP收容失效 (SCP Containment Breach)", "恐怖奶奶 (Granny)", "逃生 (Outlast 2D)",
+        "寂静岭 (Silent Hill 2D)", "零 (Fatal Frame 2D)", "死魂曲 (Siren 2D)", "钟楼 (Clock Tower)",
+        "狂城丽影 (Haunting Ground)", "尸体派对 (Corpse Party)", "魔女之家 (The Witch's House)",
+        "Ib (恐怖美术馆)", "狂父 (Mad Father)",
+        "杀戮天使 (Angels of Death)", "青鬼 (Ao Oni)", "狱都事变", "大海原与大海原",
+        "灰色庭园", "梦日记 (Yume Nikki)", "烟火 (Firework)", "港诡实录 (Paranormal HK 2D)",
+        "恶魔轮盘 (Buckshot Roulette)", "铁肺 (Iron Lung)", "8番出口 (The Exit 8)",
+        "虚空之声 (Voices of the Void)", "KinitoPET", "杀戮公主 (Slay the Princess)",
+        "谁是莱拉 (Who's Lila?)", "牛奶袋外袋装牛奶 (Milk inside a bag...)",
+        "恐惧饥饿 (Fear & Hunger)", "恐惧饥饿2 (Fear & Hunger 2)", "莱莎的炼金工房 (Atelier Ryza Text)",
+        "Needy Streamer Overload", "Class of '09", "Doki Doki Literature Club Plus",
+        "君与切切之躯 (Totono)", "沙耶之歌 (Saya no Uta)", "寒蝉鸣泣之时 (Higurashi)",
+        "海猫鸣泣之时 (Umineko)", "命运石之门 (Steins;Gate)", "混沌之子 (Chaos;Child)",
+        "机器人笔记 (Robotics;Notes)", "极限脱出 (Zero Escape)", "AI：梦境档案 (AI: The Somnium Files)",
+        "428：被封锁的涩谷", "街：命运的交叉点", "春逝百年抄", "Famicom侦探俱乐部",
+        "流行之神 (Hayarigami)", "夜回 (Yomawari)", "深夜回", "夜回三",
+        "返校 (Detention)", "还愿 (Devotion)", "女鬼桥 (The Bridge Curse)",
+        "三伏 (Sanfu)", "黑羊 (Black Sheep)", "飞越13号房", "隐形守护者",
+        "这里没有游戏 (There Is No Game: Wrong Dimension)", "史丹利的寓言：终极豪华版",
+        "新手指南 (The Beginner's Guide)", "艾迪芬奇的记忆 (What Remains of Edith Finch)",
+        "看火人 (Firewatch)", "肯塔基0号路 (Kentucky Route Zero)", "万众狂欢 (Everybody's Gone to the Rapture)",
+        "消失的彼得潘 (Gone Home)", "塔科马 (Tacoma)", "亲爱的埃斯特 (Dear Esther)",
+        "变形记 (Metamorphosis)", "蚊子模拟器 (Mister Mosquito)", "厕所穿越记 (UnEpic)",
+        "模拟山羊3 (Goat Simulator 3)", "鹿模拟器 (Deeer Simulator)", "章鱼奶爸 (Octodad)",
+        "我是面包 (I Am Bread)", "外科医生 (Surgeon Simulator)", "手部模拟器 (Hand Simulator)",
+        "说话模拟器 (Speaking Simulator)", "非常普通的鹿", "整蛊白云 (Rain on Your Parade)",
+        "不要喂猴子 (Do Not Feed the Monkeys)", "旁观者 (Beholder)", "旁观者2", "旁观者3",
+        "这是警察 (This Is the Police)", "这是警察2", "反叛公司 (Rebel Inc.)",
+        "瘟疫公司 (Plague Inc.)", "只有你能拯救世界", "以校之名", "高考恋爱100天",
+        "SCP: Secret Laboratory", "SCP-087", "SCP-3008", "Lobotomy Corporation (脑叶公司)",
+        "Library of Ruina (废墟图书馆)", "Limbus Company (边狱公司)", "Phasmophobia (恐鬼症)",
+        "Lethal Company (致命公司)", "Content Warning", "The Outlast Trials", "Outlast",
+        "Outlast 2", "Amnesia: The Dark Descent (失忆症：黑暗后裔)", "Amnesia: Rebirth", "Amnesia: The Bunker",
+        "SOMA", "Penumbra: Overture", "Penumbra: Black Plague", "Layers of Fear (层层恐惧)",
+        "Layers of Fear 2", "Observer (观察者)", "Blair Witch (布莱尔女巫)", "The Medium (灵媒)",
+        "Visage (面容)", "Madison", "The Mortuary Assistant (停尸房助手)", "Devour",
+        "Pacify", "Sign of Silence", "In Silence", "Lunch Lady",
+        "Poppy Playtime", "Garten of Banban", "Choo-Choo Charles", "Bendy and the Ink Machine",
+        "Bendy and the Dark Revival", "Five Nights at Freddy's (FNAF)", "FNAF: Security Breach", "FNAF: Help Wanted",
+        "Alien: Isolation (异形：隔离)", "Dead Space (死亡空间)", "Dead Space Remake", "Callisto Protocol (木卫四协议)",
+        "Resident Evil 7 (生化危机7)", "Resident Evil Village (生化危机8)", "Silent Hill 2 Remake", "Silent Hill f",
+        "Fatal Frame: Maiden of Black Water (零：濡鸦之巫女)", "Fatal Frame: Mask of the Lunar Eclipse (零：月蚀的假面)", "Siren: Blood Curse (死魂曲)",
+        "Kuon (九怨)", "Rule of Rose (玫瑰规则)", "Haunting Ground (狂城丽影)", "Clock Tower 3 (钟楼3)",
+        "Dredge (渔帆暗涌)", "Dave the Diver (潜水员戴夫 - 克苏鲁元素)", "Sunless Sea (无光之海)", "Sunless Skies (无光之空)",
+        "Darkwood (阴暗森林)", "World of Horror (恐怖的世界)", "Signalis (信号)", "Crow Country",
+        "Tormented Souls", "Alisa", "Murder House", "Nun Massacre",
+        "Bloodwash", "The Closing Shift (闭店事件)", "The Convenience Store (夜勤事件)", "Stigmatized Property (事故物件)",
+        "Inunaki Tunnel (犬鸣隧道)", "Onryo (怨灵)", "Aka Manto (赤玛瑙)", "Yuki Onna (雪女)",
+        "Ghost Train (幽灵列车)", "Missing Children (失踪儿童)", "The Caregiver (护理员)", "Parasocial (帕拉索恰)",
+        "Night Security (夜间保安)", "The Kidnap (绑架)", "Welcome to the Game", "Welcome to the Game II",
+        "Scrutinized", "Simulacra", "Simulacra 2", "Sara Is Missing",
+        "A Normal Lost Phone", "Another Lost Phone", "Replica", "Legal Dungeon"
+    ],
+    "🖱️ 放置与点击": [
+        "饼干点击器 (Cookie Clicker)", "杀毒软件模拟器", "虚拟盆栽",
+        "自动贩卖机", "解压气泡膜", "宇宙创世神",
+        "蚂蚁工坊", "细胞进化", "比特币矿工",
+        "视频博主模拟", "冒险资本家", "动物餐厅",
+        "旅行青蛙", "电子木鱼", "放置江湖", "猫咪后院",
+        "深海水族馆", "月兔冒险", "阿尔托的冒险", "Flappy Bird",
+        "点杀泰坦 (Tap Titans)", "点击英雄 (Clicker Heroes)", "无尽的边界 (Endless Frontier)",
+        "放置奇兵 (Idle Heroes)", "剑与远征 (AFK Arena)", "不休的乌拉拉", "最强蜗牛",
+        "梅尔沃放置 (Melvor Idle)", "反物质维度 (Antimatter Dimensions)", "进化之地 (Evoland)",
+        "无尽的饼干", "糖果盒 (Candy Box)", "小黑屋 (A Dark Room)", "纸片人 (Paperclips)",
+        "工厂模拟 (Factory Idle)", "反应堆 (Reactor Idle)", "我的名字叫梅奥 (My Name is Mayo)",
+        "香蕉 (Banana Game)", "鸡蛋公司 (Egg, Inc.)", "企鹅岛 (Penguin Isle)",
+        "咸鱼之王 (Salted Fish)", "一念逍遥 (Immortal Taoists)", "古代人生 (Ancient Life)",
+        "冒险与挖矿 (Adventure & Mining)", "愚公移山 (Yu Gong Yi Shan)",
+        "疯狂挂机 (Crazy Idle)", "天天打波利 (Ro Idle)", "苍之纪元 (Age of Pale)",
+        "关东煮店人情故事 (Oden Cart)", "昭和杂货店物语", "扭蛋人生 (Gacha Life)",
+        "诺普寓言 (Gnorp Apologue)", "细胞奇点 (Cell to Singularity)", "锈迹退休 (Rusty's Retirement)",
+        "普兰特拉2 (Plantera 2)", "吹叶革命 (Leaf Blower Revolution)", "苏打地牢 (Soda Dungeon)",
+        "苏打地牢2 (Soda Dungeon 2)", "龙崖 (Dragon Cliff)", "循环室 (Loop Room)",
+        "无尽的进度条 (Progress Quest)", "神界原罪放置版 (Idle Champions)", "苍白之夜 (Pale Blue)",
+        "猫咪和汤 (Cats & Soup)", "昭和夏日祭物语", "昭和盛夏祭典故事",
+        "众多回忆的食堂故事", "关东煮店人情故事2", "关东煮店人情故事3", "关东煮店人情故事4",
+        "深夜食堂", "动物温泉", "动物滑雪场", "仓鼠村",
+        "月兔漫游", "月兔历险记", "旅行青蛙：中国之旅",
+        "江南百景图", "桃源深处有人家", "叫我大掌柜", "日理万姬",
+        "我在大清当皇帝", "极品芝麻官", "叫我万岁爷", "我在大理寺当宠物",
+        "一亿小目标", "一亿小目标2", "买房记", "北京浮生记",
+        "人生重开模拟器", "修仙模拟器", "修真模拟器", "修魔模拟器",
+        "放置少女", "放置七骑士", "放置天使", "放置战娘",
+        "放置三国", "放置封神", "放置西游", "放置水浒",
+        "挂机那三国", "挂机吧主公", "挂机破坏神", "挂机英雄传",
+        "天天挂机", "全民挂机", "口袋挂机", "梦幻挂机",
+        "点击泰坦2 (Tap Titans 2)", "点击大亨 (Tap Tycoon)", "点击巫师 (Tap Wizard)",
+        "点击骑士 (Tap Knight)", "点击杀手 (Clicker Killer)", "点击战争 (Clicker Wars)",
+        "虚拟币挖矿 (Bitcoin Billionaire)", "虚拟主播 (Vlogger Go Viral)", "油管主播 (Tuber Simulator)",
+        "网吧老板 (Internet Cafe Tycoon)", "健身房大亨 (Gym Tycoon)", "动物园大亨 (Idle Zoo)",
+        "过山车大亨 (Idle Roller Coaster)", "超市大亨 (Idle Supermarket)", "银行大亨 (Idle Bank)",
+        "NGU Idle", "Wizard and Minion Idle", "Synergism", "Realm Grinder",
+        "Idle Skilling", "Legends of Idleon (Idleon MMO)", "Mr. Mine", "Crusaders of the Lost Idols",
+        "Firestone Idle RPG", "Increlution", "Orb of Creation", "Your Chronicle",
+        "Idle Slayer", "Exponential Idle", "Kittens Game", "Evolve Idle",
+        "Trimps", "Sandcastle Builder", "Swarm Simulator", "Shark Game",
+        "CivClicker", "Spaceplan", "DodecaDragons", "Prestige Tree",
+        "The Modding Tree", "Jacorb's Games", "Acres", "Plantera",
+        "Virtual Beggar", "AdVenture Communist", "AdVenture Ages", "Pocket Plants",
+        "Walkr", "Forest: Stay Focused", "Habitica", "Godville",
+        "Mountain (山)", "Viridi", "Chillquarium", "Koi Farm",
+        "Tinkertown", "Cozy Grove", "Littlewood", "Forager (浮岛物语)",
+        "Nova Drift (半放置)", "Vampire Survivors (半放置)", "Brotato (半放置)", "Loop Hero (循环勇者 - 放置元素)",
+        "Soda Dungeon 2", "Merchant RPG", "Shop Titans", "Tiny Tower",
+        "Pocket Trains", "Pocket Planes", "Disco Zoo", "Nimblebit Games",
+        "Fallout Shelter (辐射避难所)", "Westworld", "Game of Thrones: Tale of Crows", "The Trail",
+        "My Oasis", "AbyssRium (深海水族馆)", "AbyssRium Pole", "Penguin Isle (企鹅岛)",
+        "Tsuki Adventure (月兔冒险)", "Tsuki's Odyssey (月兔漫游)", "Neko Atsume (猫咪后院)", "Usagi Shima (兔岛)",
+        "Adorable Home", "KleptoCats", "KleptoDogs", "Alpaca World",
+        "Hamster Life", "Egg, Inc.", "Bee Factory", "Idle Miner Tycoon",
+        "Idle Factory Tycoon", "Idle Theme Park Tycoon", "Idle Supermarket Tycoon", "Lumber Inc",
+        "Used Car Tycoon", "Frozen City", "Whiteout Survival", "Last Fortress: Underground"
+    ],
+    "💾 文字与代码": [
+        "Wordle", "黑客打字员", "Regex 高尔夫", "CSS 园丁",
+        "ASCII 竞技场", "SQL 注入大冒险", "Vim 大冒险",
+        "Git 分支管理", "Markdown 编辑器游戏", "JSON 解析器",
+        "Python 缩进地狱", "Stack Overflow Simulator", "404 寻找页面",
+        "Zork", "Colossal Cave Adventure", "80 Days", "Sorcery!", "Lifeline", "Emily is Away",
+        "Hacknet", "Uplink", "TIS-100", "Shenzhen I/O", "Exapunks", "While True: learn()",
+        "Screeps", "Bitburner", "Quadrilateral Cowboy",
+        "人力资源机器 (Human Resource Machine)", "70亿人 (7 Billion Humans)", "程序员升职记",
+        "异常 (Exception)", "代码战斗 (CodeCombat)", "代码战争 (Codewars)", "Leetcoder 模拟器",
+        "巴别塔 (Babel)", "文字狱", "流言侦探", "隐形守护者 (Interactive Movie)",
+        "底特律：变人 (Text Branch)", "暴雨 (Heavy Rain Text)", "超凡双生 (Beyond Two Souls Text)",
+        "AI 梦境档案", "逆转裁判 (Ace Attorney Text)", "弹丸论破 (Danganronpa Debate)",
+        "逗比人生 (Funny Life)", "第二人生 (Second Life)", "篱笆庄秘闻 (Liba Village)",
+        "潜伏之赤途 (Lurking)", "长生劫 (Tomb Mystery)", "失落的记忆 (Lost Memories)",
+        "生命线 (Lifeline)", "异次元通讯 (Miko)",
+        "图灵完备 (Turing Complete)", "编程乐趣 (Joy of Programming)", "最后通牒BBS (Last Call BBS)",
+        "Mindustry (Logic)", "Craftomation 101", "Autonauts (Coding)", "Gladiabots (AI)",
+        "Neon Struct", "Quadrilateral Cowboy", "Mainlining", "NITE Team 4",
+        "Grey Hack", "Hacker Simulator", "PC Architect", "Startup Company",
+        "Game Builder Garage", "Dreams (Logic)", "LittleBigPlanet (Logic)",
+        "Minecraft (Redstone)", "Factorio (Circuit Network)", "Oxygen Not Included (Automation)",
+        "Stationeers (IC10)", "Stormworks (Lua)", "From the Depths (Lua)",
+        "Space Engineers (C#)", "Garry's Mod (Wiremod)", "Roblox (Lua)",
+        "Computercraft (Minecraft Mod)", "OpenComputers (Minecraft Mod)",
+        "Web Hacking (Hack The Box)", "CTF Simulator",
+        "Wordle Unlimited", "Contexto", "Semantle", "Connections",
+        "The New York Times Crossword", "Scrabble GO", "Words With Friends",
+        "Typing of the Dead: Overkill", "Epistory - Typing Chronicles", "Nanotale - Typing Chronicles",
+        "The Textorcist", "Touch Type Tale", "ZType", "Type Racer",
+        "Monkeytype", "Keybr", "Typing Club",
+        "生命线：静夜", "生命线：冰天雪地", "生命线：涅槃", "生命线：魂萦一线",
+        "流言侦探：活着的死者", "流言侦探：曼谷暴雨", "寄居隅怪奇事件簿",
+        "疑案追声 (Unheard)", "全网公敌 (Cyber Manhunt)", "全网公敌：新世界",
+        "真探 (Truth Detective)", "孙美琪疑案系列", "墨心", "海沙风云",
+        "葬花", "泡沫冬景", "他人世界末", "恋爱绮谭",
+        "小白兔电商", "游魂2", "千恋万花", "魔女的夜宴",
+        "Colossal Cave Adventure (巨洞冒险)", "Zork I", "Zork II", "Zork III",
+        "The Hitchhiker's Guide to the Galaxy (银河系漫游指南)", "A Mind Forever Voyaging", "Trinity", "Bureaucracy",
+        "Anchorhead", "Spider and Web", "Photopia", "Galatea",
+        "Lost Pig", "Violet", "Slouching Towards Bedlam", "9:05",
+        "Aisle", "Shade", "Hadean Lands", "Counterfeit Monkey",
+        "80 Days (环游世界80天)", "Sorcery! 1-4", "Creatures Such as We", "Choice of Robots",
+        "Choice of the Dragon", "The Life and Suffering of Sir Brante", "Suzerain (宗主国)", "Yes, Your Grace",
+        "Pentiment", "Roadwarden", "Citizen Sleeper", "Norco",
+        "Kentucky Route Zero", "Disco Elysium (极乐迪斯科)", "Planescape: Torment (异域镇魂曲)", "Torment: Tides of Numenera",
+        "Baldur's Gate (博德之门文字量)", "Baldur's Gate II", "Pillars of Eternity", "Pillars of Eternity II",
+        "Tyranny (暴行)", "Shadowrun Returns", "Shadowrun: Dragonfall", "Shadowrun: Hong Kong",
+        "Sunless Sea (无光之海)", "Sunless Skies (无光之空)", "Fallen London", "A House of Many Doors",
+        "Vampire: The Masquerade - Coteries of New York", "Vampire: The Masquerade - Shadows of New York", "Werewolf: The Apocalypse - Heart of the Forest", "Neo Cab",
+        "Eliza", "Subsurface Circular", "Quarantine Circular", "Bury Me, My Love",
+        "Florence", "A Short Hike (Dialogues)", "Night in the Woods", "Oxenfree",
+        "Oxenfree II", "Afterparty", "Mutazione", "Spiritfarer (Dialogues)",
+        "Coffee Talk Episode 2", "VA-11 Hall-A", "Read Only Memories: 2064", "The Red Strings Club",
+        "Hypnospace Outlaw", "Emily is Away <3", "Emily is Away Too", "Cibele",
+        "Her Story", "Telling Lies", "Immortality", "Project Kat", "Paper Lily"
+    ],
+    "⚛️ 物理沙盒": [
+        "粉末游戏 (Falling Sand)", "桥梁构造师 (Poly Bridge)", "布娃娃大炮 (Ragdoll Cannon)",
+        "流体模拟器", "行星引力模拟", "布料模拟",
+        "多米诺骨牌", "液压机", "投石车", "火箭升空",
+        "软体俄罗斯方块", "弹力球", "烟花模拟器",
+        "盖瑞模组2D (Physics Gun)", "罗布乐思Obby", "泰拉瑞亚2D",
+        "Besiege 2D", "坎巴拉太空计划2D", "BeamNG.drive 2D", "Teardown 2D", "Noita (Pixel Physics)",
+        "The Powder Toy", "Universe Sandbox 2D",
+        "涂鸦骑士 (Scribblenauts)", "神奇的阿力 (Amazing Alex)", "机械迷宫 (Mekorama)",
+        "捣蛋猪 (Bad Piggies)", "快乐轮子 (Happy Wheels)", "人类一败涂地 (Human Fall Flat 2D)",
+        "基佬大乱斗 (Gang Beasts 2D)", "派对动物 (Party Animals 2D)", "模拟山羊 (Goat Simulator 2D)",
+        "完全精确战斗模拟器 (TABS 2D)", "拆迁 (Teardown 2D)", "瓦尔哈拉 (Valheim Physics)",
+        "孢子：细胞阶段 (Spore Cell)", "agar.io", "slither.io", "diep.io",
+        "球球大作战 (Battle of Balls)", "贪吃蛇大作战 (Snake Off)", "弓箭手大作战 (Arrow.io)",
+        "野蛮人大作战 (BarbarQ)", "墨水一击 (Ink Wars)", "拥挤城市 (Crowd City)",
+        "废品机械师 (Scrap Mechanic 2D)", "创世战车 (Crossout 2D)", "我要翘课 (Skip School)",
+        "神回避 (God Avoid)", "妈妈把我的游戏机藏起来了 (Hidden Game)",
+        "弄死火柴人 (Stickman Dismounting)", "真实物理引擎 (Phun)", "AlgoBot",
+        "毁灭工具 (Instruments of Destruction)", "人类游乐场 (People Playground)",
+        "Trailmakers", "泰拉科技 (TerraTech)", "坎巴拉太空计划2 (KSP 2)",
+        "SimplePlanes", "SimpleRockets 2", "Juno: New Origins",
+        "Main Assembly", "Dream Car Builder", "Homebrew - Vehicle Sandbox",
+        "Stormworks: Build and Rescue", "From the Depths", "Space Engineers",
+        "Medieval Engineers", "Astroneer", "Stationeers",
+        "Satisfactory", "Foundry", "Techtonica",
+        "Hydroneer", "Gold Rush: The Game", "Demolish & Build",
+        "Car Mechanic Simulator", "Tank Mechanic Simulator", "Plane Mechanic Simulator",
+        "Rover Mechanic Simulator", "Mech Mechanic Simulator",
+        "WorldBox - God Simulator", "Solar Smash", "City Smash", "Room Smash",
+        "Smashy Road", "Turbo Dismount", "Stair Dismount",
+        "Guts and Glory", "Happy Room", "Mutilate a Doll 2",
+        "Interactive Buddy", "Kick the Buddy", "Beat the Boss",
+        "Algodoo", "OE-Cake", "Liquid War",
+        "Crayon Physics", "Numpty Physics", "Armadillo Run",
+        "Pontifex", "Bridge It", "Bridge Project", "Bridge Constructor",
+        "Bridge Constructor Stunts", "Bridge Constructor Medieval", "Bridge Constructor Playground",
+        "Poly Bridge 2", "Poly Bridge 3", "When Ski Lifts Go Wrong",
+        "Carried Away", "Rigid Force Alpha",
+        "Getting Over It with Bennett Foddy", "QWOP", "CLOP", "GIRP",
+        "Mount Your Friends", "Heave Ho", "Octodad: Dadliest Catch",
+        "I Am Bread", "Surgeon Simulator 2", "Moving Out", "Moving Out 2",
+        "Tools Up!", "Unrailed!", "Overcooked! 2",
+        "Garry's Mod (GMod)", "Roblox", "Minecraft (Physics Mod)", "Teardown",
+        "BeamNG.drive", "Rigs of Rods", "Next Car Game (Wreckfest)", "MudRunner",
+        "SnowRunner", "Spintires", "Farming Simulator 22", "Construction Simulator",
+        "Hardspace: Shipbreaker", "PowerWash Simulator", "Viscera Cleanup Detail", "PC Building Simulator 2",
+        "Electrician Simulator", "Gas Station Simulator", "Supermarket Simulator", "Internet Cafe Simulator 2",
+        "My Summer Car", "Mon Bazou", "The Long Drive", "Jalopy",
+        "Brick Rigs", "Lego Worlds", "Lego 2K Drive", "Banjo-Kazooie: Nuts & Bolts",
+        "Kingdoms and Castles", "Townscaper", "Dorfromantik", "Islanders",
+        "Cloud Gardens", "Terra Nil", "FlowScape", "Tiny Glade",
+        "Summerhouse", "Garden Galaxy", "Unpacking", "Wilmot's Warehouse",
+        "A Little to the Left", "Sticky Business", "Potion Craft", "Strange Horticulture",
+        "Wobbledogs", "Slime Rancher", "Slime Rancher 2", "Viva Pinata",
+        "Bugsnax", "Donut County", "Katamari Damacy REROLL", "We Love Katamari REROLL",
+        "Beautiful Katamari", "Katamari Forever", "Touch My Katamari", "Wattam",
+        "Noby Noby Boy", "LocoRoco", "LocoRoco 2", "Patapon Remastered",
+        "Rolando", "Bad Piggies HD", "Angry Birds 2", "Angry Birds Space",
+        "Angry Birds Star Wars", "Cut the Rope 2", "Cut the Rope: Time Travel", "Where's My Water? 2",
+        "Where's My Perry?", "Sprinkle", "Sprinkle Islands", "Smash Hit",
+        "PinOut", "Does not Commute", "Mediocre Games", "Osmos"
+    ]
+};
+
+        const complexityLevels = [
+            { id: "raw", label: "📄 原始模版 (Raw)", desc: "最纯粹的单句指令，无额外参数，由AI自由发挥。" },
+            { id: "simple", label: "👶 简单 (Simple)", desc: "核心机制原型，无复杂动画，注重功能实现。" },
+            { id: "normal", label: "👦 普通 (Normal)", desc: "包含计分、基础UI、音效占位符、完整游戏循环。" },
+            { id: "advanced", label: "👨‍🎓 高级 (Advanced)", desc: "精美UI、粒子特效、本地存储(LocalStorage)、移动端触摸适配。" },
+            { id: "complex", label: "🔥 复杂 (Complex)", desc: "复杂算法(AI/物理引擎)、关卡系统、设置菜单、震动反馈。" },
+            { id: "professional", label: "🚀 专业 (Professional)", desc: "商业级代码结构、Canvas优化、状态机、SVG素材生成。" },
+            { id: "extreme", label: "⚡ 极限 (Extreme)", desc: "压榨单文件极限：光影Shader、大量生成式内容、极其平滑的手感。" }
         ];
 
-        let currentLine = 0, currentChar = 0, currentText = '';
-        const speed = 20;
+        let generalRequirements = [
+            { id: 'runnable', label: '✅ 完整可运行 (Runnable)', text: '必须完整可运行，不要只有框架。' },
+            { id: 'responsive', label: '📱 响应式适配 (Responsive)', text: '适配浏览器窗口大小调整。' },
+            { id: 'no-external', label: '🖼️ 无外部资源 (No External Assets)', text: '避免使用外部图片链接（使用颜色、Emoji或Canvas绘制代替）。' },
+            { id: 'comments', label: '📝 详细注释 (Comments)', text: '包含详细的注释解释关键逻辑。' },
+            { id: 'cors', label: '🔒 无跨域限制 (No CORS)', text: '确保没有跨域(CORS)错误，不依赖本地服务器。' },
+            { id: 'chinese-text', label: '🇨🇳 全中文文本 (Chinese Text)', text: '构建的游戏内的文本统一使用中文而不是其他语言。' }
+        ];
 
-        function typeWriter() {
-          if (currentLine < commands.length) {
-            if (currentChar < commands[currentLine].length) {
-              currentText += commands[currentLine][currentChar];
-              terminal.innerHTML =
-                commands.slice(0, currentLine).join('\n') +
-                (currentLine > 0 ? '\n' : '') + currentText +
-                '<span style="background: #10b981; width: 10px; height: 18px; display: inline-block; animation: blink 1s infinite; margin-left: 2px;"></span>';
-              currentChar++;
-              setTimeout(typeWriter, speed);
+        // --- 2. State Management ---
+        let state = {
+            mode: 'single', // 'single' or 'fusion'
+            category: Object.keys(gamesDB)[0],
+            game: gamesDB[Object.keys(gamesDB)[0]][0],
+            selectedGames: [], // For fusion mode
+            fusionStrategy: 'equal', // 'equal' or 'main'
+            complexity: "raw",
+            version: "",
+            visualStyle: "",
+            techStack: "",
+            requirements: [],
+            isCustomGame: false
+        };
+
+        // --- 3. DOM Elements ---
+        const categoryContainer = document.getElementById('category-container');
+        const gamesGrid = document.getElementById('games-grid');
+        const complexityGrid = document.getElementById('complexity-grid');
+        const requirementsGrid = document.getElementById('requirements-grid');
+        const outputPrompt = document.getElementById('output-prompt');
+        const customInput = document.getElementById('custom-game-input');
+        const searchInput = document.getElementById('game-search');
+
+        const gameVersionSelect = document.getElementById('game-version');
+        const visualStyleSelect = document.getElementById('visual-style');
+        const techStackSelect = document.getElementById('tech-stack');
+        const toggleReqsBtn = document.getElementById('toggle-all-reqs');
+
+        const newReqInput = document.getElementById('new-req-input');
+        const addReqBtn = document.getElementById('add-req-btn');
+
+        const copyBtn = document.getElementById('copy-btn');
+        const historyList = document.getElementById('history-list');
+        const clearHistoryBtn = document.getElementById('clear-history');
+        const tokenEstimate = document.getElementById('token-estimate');
+
+        // Mode specific elements
+        const fusionControls = document.getElementById('fusion-controls');
+        const selectedGamesList = document.getElementById('selected-games-list');
+        const fusionCount = document.getElementById('fusion-count');
+        const modeSingleBtn = document.getElementById('mode-single');
+        const modeFusionBtn = document.getElementById('mode-fusion');
+
+        // --- 4. Render Functions ---
+
+        function setMode(mode) {
+            state.mode = mode;
+            if (mode === 'single') {
+                modeSingleBtn.classList.add('active');
+                modeFusionBtn.classList.remove('active');
+                fusionControls.classList.add('hidden');
             } else {
-              currentLine++; 
-              currentChar = 0; 
-              currentText = '';
-              setTimeout(typeWriter, 100);
+                modeSingleBtn.classList.remove('active');
+                modeFusionBtn.classList.add('active');
+                fusionControls.classList.remove('hidden');
+                renderSelectedGames();
             }
-          } else {
+            renderGames(); // Re-render to update chip styles
+            updatePrompt();
+        }
+
+        function renderSelectedGames() {
+            selectedGamesList.innerHTML = '';
+            fusionCount.innerText = `${state.selectedGames.length}/5`;
+
+            if (state.selectedGames.length === 0) {
+                selectedGamesList.innerHTML = '<span class="text-xs text-indigo-400/50 italic py-1">点击下方游戏进行添加...</span>';
+                return;
+            }
+
+            state.selectedGames.forEach(game => {
+                const chip = document.createElement('div');
+                chip.className = 'bg-indigo-600 text-white text-[10px] px-2 py-1 rounded flex items-center gap-2 shadow-sm animate-fade-in';
+                chip.innerHTML = `
+                    <span>${game}</span>
+                    <button class="hover:text-red-300 transition" onclick="removeSelectedGame('${game}')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                selectedGamesList.appendChild(chip);
+            });
+        }
+
+        // Global function for onclick in HTML string
+        window.removeSelectedGame = (game) => {
+            state.selectedGames = state.selectedGames.filter(g => g !== game);
+            renderSelectedGames();
+            renderGames(); // Update visual state of grid
+            updatePrompt();
+        };
+
+        function renderCategories() {
+            categoryContainer.innerHTML = '';
+            Object.keys(gamesDB).forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `category-btn text-xs font-bold px-3 py-2 text-slate-400 hover:text-white transition ${state.category === cat ? 'active' : ''}`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    state.category = cat;
+                    if (state.mode === 'single') {
+                        state.game = gamesDB[cat][0];
+                        state.isCustomGame = false;
+                        customInput.value = '';
+                    }
+                    searchInput.value = '';
+                    renderCategories();
+                    renderGames();
+                    updatePrompt();
+                };
+                categoryContainer.appendChild(btn);
+            });
+        }
+
+        function renderGames() {
+            gamesGrid.innerHTML = '';
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            let gamesToShow = [];
+
+            if (searchTerm) {
+                Object.keys(gamesDB).forEach(cat => {
+                    gamesDB[cat].forEach(game => {
+                        if (game.toLowerCase().includes(searchTerm)) {
+                            gamesToShow.push({ name: game, category: cat });
+                        }
+                    });
+                });
+            } else {
+                gamesToShow = gamesDB[state.category].map(g => ({ name: g, category: state.category }));
+            }
+
+            if (gamesToShow.length === 0) {
+                gamesGrid.innerHTML = '<div class="col-span-full text-center text-slate-500 text-xs py-4">未找到匹配游戏</div>';
+                return;
+            }
+
+            gamesToShow.forEach(item => {
+                const btn = document.createElement('button');
+                const name = item.name;
+
+                // Styling Logic based on Mode
+                let isSelected = false;
+                let isFusionSelected = false;
+
+                if (state.mode === 'single') {
+                    isSelected = !state.isCustomGame && state.game === name;
+                } else {
+                    isFusionSelected = state.selectedGames.includes(name);
+                }
+
+                let baseClass = `game-chip text-left text-xs p-2 rounded border border-slate-700 bg-slate-800 text-slate-300`;
+                if (isSelected) baseClass += ' active';
+                else if (isFusionSelected) baseClass += ' fusion-selected';
+                else baseClass += ' hover:bg-slate-700';
+
+                btn.className = baseClass;
+
+                if (searchTerm) {
+                    btn.innerHTML = `<span class="text-[10px] text-slate-500 block mb-1">${item.category}</span>${name}`;
+                } else {
+                    btn.innerText = name;
+                }
+
+                btn.onclick = () => {
+                    if (state.mode === 'single') {
+                        state.game = name;
+                        state.isCustomGame = false;
+                        customInput.value = '';
+                        if (state.category !== item.category) {
+                            state.category = item.category;
+                            renderCategories();
+                        }
+                    } else {
+                        // Fusion Mode Toggle
+                        if (state.selectedGames.includes(name)) {
+                            state.selectedGames = state.selectedGames.filter(g => g !== name);
+                        } else {
+                            if (state.selectedGames.length >= 5) {
+                                alert("融合模式最多支持5个游戏！");
+                                return;
+                            }
+                            state.selectedGames.push(name);
+                        }
+                        renderSelectedGames();
+                    }
+                    renderGames();
+                    updatePrompt();
+                };
+                gamesGrid.appendChild(btn);
+            });
+        }
+
+        function renderComplexity() {
+            complexityGrid.innerHTML = '';
+            complexityLevels.forEach(level => {
+                const div = document.createElement('div');
+                const isActive = state.complexity === level.id;
+                div.className = `level-card p-3 rounded bg-slate-800 ${isActive ? 'active' : ''}`;
+                if (level.id === 'raw') div.setAttribute('data-id', 'raw');
+
+                div.innerHTML = `
+                    <div class="font-bold text-white text-xs mb-1">${level.label}</div>
+                    <div class="text-[10px] text-slate-400 leading-tight">${level.desc}</div>
+                `;
+                div.onclick = () => {
+                    state.complexity = level.id;
+                    renderComplexity();
+                    updatePrompt();
+                };
+                complexityGrid.appendChild(div);
+            });
+        }
+
+        function renderRequirements() {
+            requirementsGrid.innerHTML = '';
+            generalRequirements.forEach(req => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 text-xs text-slate-300 cursor-pointer hover:text-white transition group';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'custom-checkbox';
+                checkbox.checked = state.requirements.includes(req.id);
+
+                checkbox.onchange = (e) => {
+                    if (e.target.checked) {
+                        state.requirements.push(req.id);
+                    } else {
+                        state.requirements = state.requirements.filter(id => id !== req.id);
+                    }
+                    updatePrompt();
+                };
+
+                const span = document.createElement('span');
+                span.innerText = req.label;
+                span.className = 'select-none group-hover:text-blue-300 transition-colors truncate';
+                span.title = req.text;
+
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                requirementsGrid.appendChild(label);
+            });
+        }
+
+        // --- 5. Logic & Prompt Generation ---
+
+        function getComplexityInstructions(level) {
+            const instructions = {
+                raw: "",
+                simple: "Keep the code simple and readable. Focus solely on the core gameplay loop. Use basic colored rectangles for graphics. No external assets.",
+                normal: "Include a Start Screen, Game Over Screen, and Score tracking. Use basic sound effects (synthesized using AudioContext). Ensure controls are responsive.",
+                advanced: "Implement a polished UI with CSS animations. Add particle effects for interactions (explosions, collecting items). Save high scores to LocalStorage. Support both Keyboard and Touch controls for mobile.",
+                complex: "Create a robust game state machine. Add screen shake, detailed particle systems, and difficulty scaling over time. If applicable, add simple AI behaviors. The code should be well-structured with comments.",
+                professional: "Structure the code using clean classes/modules within the single file. Use requestAnimationFrame for the loop. Generate SVG assets programmatically for crisp graphics. Ensure strict type checking (JSDoc) and error handling.",
+                extreme: "PUSH THE LIMITS. Use WebGL shaders or advanced Canvas compositing for visuals if needed. Add 'juice' (tweening, heavy feedback). Procedural generation for infinite replayability. A comprehensive, production-ready mini-game."
+            };
+            return instructions[level];
+        }
+
+        function getStyleInstructions(style) {
+            if (!style) return "";
+            const styles = {
+                original: "Replicate the original visual style of the game as closely as possible using CSS/Canvas primitives.",
+                neon: "Use a 'Cyberpunk' visual style: dark backgrounds (#000), neon glowing lines (box-shadow/glow), and futuristic fonts.",
+                pixel: "Simulate a retro 8-bit aesthetic. Use blocky fonts (import a Google Font like 'Press Start 2P') and pixel-aligned graphics.",
+                minimal: "Use a clean, Apple-like 'Flat Design'. Soft pastel colors, rounded corners, subtle shadows, and sans-serif typography.",
+                ascii: "Render the entire game using ASCII characters within a <pre> tag or monospace font canvas. No standard shapes, only text.",
+                sketch: "Make the game look like a hand-drawn doodle on paper. Use rough lines, white background, and 'pencil' colors.",
+                dark: "Use a high-contrast Dark Mode theme suitable for night gaming. Slate/Zinc color palette."
+            };
+            return styles[style];
+        }
+
+        function getTechInstructions(tech) {
+            if (!tech) return "";
+            if (tech === 'auto') return "Choose the best technical approach (Canvas API vs DOM manipulation) for this specific game type.";
+            if (tech === 'canvas') return "You MUST use the HTML5 <canvas> API for all rendering. Do not use DOM elements for game objects.";
+            if (tech === 'dom') return "You MUST use HTML DOM elements (divs, spans) for game objects. Manipulate them via CSS absolute positioning.";
+            if (tech === 'svg') return "You MUST use SVG elements for rendering game entities to ensure perfect scaling.";
+            if (tech === 'three') return "Use Three.js (via CDN) to create a 3D version or 2.5D version of this concept.";
+            return "";
+        }
+
+        function generatePrompt() {
+            let prompt = "";
+            let promptIntro = ""; // The main descriptive sentence
+
+            // --- 1. Construct the Intro Sentence based on Mode ---
+            if (state.mode === 'single') {
+                const gameName = state.isCustomGame ? customInput.value : state.game;
+                const versionMap = {
+                    '': '', 'simplified': ' (简化版)', 'extended': ' (扩展版)', 'specialized': ' (特化版)', 'modded': ' (魔改版)',
+                    '2d': ' (2D版)', '3d': ' (3D版)', 'pixel': ' (像素版)', 'demake': ' (复古降级版)', 'webgl': ' (WebGL版)',
+                    'text': ' (纯文字版)', 'mobile': ' (移动端竖屏版)'
+                };
+                const effectiveName = `${gameName}${versionMap[state.version] || ''}`;
+
+                if (state.complexity === 'raw') {
+                    promptIntro = `帮我写一个单html文件的《${effectiveName}》游戏，尽可能尽全力去复刻还原《${effectiveName}》的游戏内容。`;
+                } else {
+                    promptIntro = `帮我写一个单HTML文件的《${effectiveName}》游戏。\n\n**目标**: 尽可能尽全力去复刻还原《${effectiveName}》的游戏内容，同时确保代码在一个独立的HTML文件中（包含CSS, JS）。`;
+                }
+
+            } else {
+                // FUSION MODE
+                const games = state.selectedGames;
+                if (games.length === 0) {
+                    return "请至少选择一个游戏进行融合...";
+                }
+
+                if (state.fusionStrategy === 'equal') {
+                    // Template 1: Equal Merge
+                    // Format: A和B、C、D...
+                    let gameListStr = "";
+                    if (games.length === 1) {
+                        gameListStr = `《${games[0]}》`;
+                    } else {
+                        const first = games[0];
+                        const others = games.slice(1).join("》、《");
+                        gameListStr = `《${first}》和《${others}》`;
+                    }
+                    promptIntro = `帮我写一个单html文件的游戏，把${gameListStr}融合成一个游戏，尽可能尽全力去复刻还原它们的的游戏内容进行一个融合成一个新的游戏。`;
+
+                } else {
+                    // Template 2: Main Base Merge
+                    const gameListStr = games.join("》和《");
+                    const mainGame = games[0];
+                    promptIntro = `帮我写一个单html文件的游戏，把《${gameListStr}》融合成一个游戏，尽可能尽全力去复刻还原它们的的游戏内容进行一个融合成一个新的游戏，以《${mainGame}》这个游戏为主体进行融合构建。`;
+                }
+            }
+
+            // --- 2. Assemble Final Prompt ---
+
+            // Raw Complexity Handling
+            if (state.complexity === 'raw') {
+                tokenEstimate.innerText = "Complexity: Raw Template";
+                prompt = promptIntro;
+
+                // Append requirements even in raw mode if they exist
+                if (state.requirements.length > 0) {
+                    prompt += `\n\n**通用要求**:\n`;
+                    state.requirements.forEach(reqId => {
+                        const req = generalRequirements.find(r => r.id === reqId);
+                        if (req) prompt += `- ${req.text}\n`;
+                    });
+                }
+                return prompt;
+            }
+
+            // Standard Complexity Handling
+            prompt = promptIntro + "\n\n";
+
+            // If fusion mode, manually ensure the "Single HTML" constraint is reinforced if the template didn't emphasize it enough for the AI context
+            if (state.mode === 'fusion') {
+                 prompt += `**目标**: 创建一个独特的融合游戏体验，同时确保代码在一个独立的HTML文件中（包含CSS, JS）。\n\n`;
+            }
+
+            const complexityText = getComplexityInstructions(state.complexity);
+            const styleText = getStyleInstructions(state.visualStyle);
+            const techText = getTechInstructions(state.techStack);
+
+            prompt += `**设计要求 (${state.complexity.toUpperCase()})**:\n`;
+            prompt += `- ${complexityText}\n`;
+
+            if (styleText) {
+                prompt += `\n**视觉风格**:\n`;
+                prompt += `- ${styleText}\n`;
+            }
+
+            if (techText) {
+                prompt += `\n**技术栈限制**:\n`;
+                prompt += `- ${techText}\n`;
+            }
+
+            // Dynamic Requirements
+            if (state.requirements.length > 0) {
+                prompt += `\n**通用要求**:\n`;
+                state.requirements.forEach(reqId => {
+                    const req = generalRequirements.find(r => r.id === reqId);
+                    if (req) prompt += `- ${req.text}\n`;
+                });
+            }
+
+            // Estimate Quality
+            const levelMap = {raw: "Minimal", simple: "Low", normal: "Medium", advanced: "High", complex: "Very High", professional: "Ultra", extreme: "Maximum"};
+            tokenEstimate.innerText = `Complexity: ${levelMap[state.complexity]}`;
+
+            return prompt;
+        }
+
+        function updatePrompt() {
+            const p = generatePrompt();
+            outputPrompt.value = p;
+        }
+
+        function addNewRequirement() {
+            const val = newReqInput.value.trim();
+            if (!val) return;
+
+            const id = `custom_${Date.now()}`;
+            // Add to data source
+            generalRequirements.push({
+                id: id,
+                label: `✨ ${val}`, // Short label
+                text: val // Full text for prompt
+            });
+
+            // Auto-select the new requirement
+            state.requirements.push(id);
+
+            // Re-render
+            renderRequirements();
+            updatePrompt();
+
+            // Clear input
+            newReqInput.value = '';
+        }
+
+        // --- 6. Event Listeners ---
+
+        searchInput.addEventListener('input', (e) => {
+            renderGames();
+        });
+
+        // Fusion Strategy Radio Listeners
+        document.querySelectorAll('input[name="fusion-strat"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.fusionStrategy = e.target.value;
+                updatePrompt();
+            });
+        });
+
+        customInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.length > 0) {
+                if (state.mode === 'single') {
+                     state.isCustomGame = true;
+                     document.querySelectorAll('.game-chip').forEach(el => el.classList.remove('active'));
+                }
+            } else {
+                state.isCustomGame = false;
+                renderGames();
+            }
+            updatePrompt();
+        });
+
+        // Enter key on custom input for Fusion Mode
+        customInput.addEventListener('keypress', (e) => {
+            if (state.mode === 'fusion' && e.key === 'Enter') {
+                const val = e.target.value.trim();
+                if (val) {
+                    if (!state.selectedGames.includes(val)) {
+                         if (state.selectedGames.length >= 5) {
+                            alert("融合模式最多支持5个游戏！");
+                            return;
+                        }
+                        state.selectedGames.push(val);
+                        renderSelectedGames();
+                        updatePrompt();
+                    }
+                    customInput.value = '';
+                }
+            }
+        });
+
+        gameVersionSelect.addEventListener('change', (e) => {
+            state.version = e.target.value;
+            updatePrompt();
+        });
+
+        visualStyleSelect.addEventListener('change', (e) => {
+            state.visualStyle = e.target.value;
+            updatePrompt();
+        });
+
+        techStackSelect.addEventListener('change', (e) => {
+            state.techStack = e.target.value;
+            updatePrompt();
+        });
+
+        toggleReqsBtn.addEventListener('click', () => {
+            if (state.requirements.length > 0) {
+                // Deselect all
+                state.requirements = [];
+            } else {
+                // Select all
+                state.requirements = generalRequirements.map(r => r.id);
+            }
+            renderRequirements();
+            updatePrompt();
+        });
+
+        // Add Req Events
+        addReqBtn.addEventListener('click', addNewRequirement);
+        newReqInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addNewRequirement();
+        });
+
+        // Copy & History Logic
+        function saveToHistory(prompt, title) {
+            let history = JSON.parse(localStorage.getItem('prompt_history') || '[]');
+            const timestamp = new Date().toLocaleTimeString();
+            history.unshift({ title, prompt, time: timestamp });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('prompt_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('prompt_history') || '[]');
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="text-slate-600 text-xs text-center mt-4">暂无历史记录</div>';
+                return;
+            }
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-800 p-2 rounded border border-slate-700 hover:border-blue-500 cursor-pointer group";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-blue-400 font-bold truncate w-32">${item.title}</span>
+                        <span class="text-[10px] text-slate-500">${item.time}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 truncate">${item.prompt.substring(0, 50)}...</div>
+                `;
+                div.onclick = () => {
+                    outputPrompt.value = item.prompt;
+                    div.style.backgroundColor = '#1e293b';
+                    setTimeout(() => div.style.backgroundColor = '', 200);
+                };
+                historyList.appendChild(div);
+            });
+        }
+
+        copyBtn.addEventListener('click', () => {
+            outputPrompt.select();
+            document.execCommand('copy');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<i class="fa-solid fa-check"></i> 已复制`;
+            copyBtn.classList.replace('bg-blue-600', 'bg-green-600');
+            copyBtn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+
+            // Construct title for history
+            let gameName = "";
+            if (state.mode === 'single') {
+                 gameName = state.isCustomGame ? customInput.value : state.game;
+                 if (state.version) {
+                     const versionMap = {
+                        'simplified': ' (Simple)', 'extended': ' (Ext)', 'specialized': ' (Spec)', 'modded': ' (Mod)',
+                        '2d': ' (2D)', '3d': ' (3D)', 'pixel': ' (Px)',
+                        'demake': ' (Old)', 'webgl': ' (GL)', 'text': ' (Txt)', 'mobile': ' (Mob)'
+                    };
+                    gameName += versionMap[state.version] || '';
+                }
+            } else {
+                gameName = `融合: ${state.selectedGames.join('+')}`;
+            }
+
+            saveToHistory(outputPrompt.value, gameName);
+
             setTimeout(() => {
-              currentLine = 0; 
-              currentChar = 0; 
-              currentText = ''; 
-              terminal.innerHTML = ''; 
-              typeWriter();
-            }, 3000);
-          }
-        }
-        typeWriter();
-      }
-
-      // FAQ 交互
-      document.querySelectorAll('.faq-question').forEach(question => {
-        question.addEventListener('click', function() {
-          const arrow = this.querySelector('span');
-          if (this.parentElement.hasAttribute('open')) {
-            arrow.style.transform = 'rotate(0deg)';
-          } else {
-            arrow.style.transform = 'rotate(180deg)';
-          }
+                copyBtn.innerHTML = originalText;
+                copyBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                copyBtn.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
+            }, 2000);
         });
-      });
 
-      // 快速上手代码生成
-      const codeEl = document.getElementById('codeOutput');
-      const copyCodeBtn = document.getElementById('copyCodeBtn');
-      const baseUrl = document.getElementById('baseUrl').textContent.trim();
-      const endpoint = document.getElementById('endpoint').textContent.trim();
-
-      let activeLang = 'curl';
-      let activeModel = 'gemini-2.5-pro';
-
-      const setActive = (selector, cls, value, key) => {
-        document.querySelectorAll(selector).forEach(el => {
-          const isActive = el.dataset[key] === value;
-          el.classList.toggle('active', isActive);
-          if (el.hasAttribute('aria-pressed')) el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-          if (el.hasAttribute('aria-selected')) el.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('prompt_history');
+            renderHistory();
         });
-      };
 
-      const escapeHtml = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        // --- 7. Initialization ---
+        setMode('single'); // Initialize
+        renderCategories();
+        renderGames();
+        renderComplexity();
+        renderRequirements();
+        renderHistory();
+        updatePrompt();
 
-      function renderCode() {
-        const code = getSnippet(activeLang, activeModel);
-        const lines = code.trimEnd().split('\n').map(l => `<span class="code-line">${escapeHtml(l)}</span>`).join('\n');
-        codeEl.innerHTML = lines;
-      }
-
-      function getSnippet(lang, model) {
-        if (lang === 'curl') {
-          return `curl -X POST '${endpoint}' \\
-  -H 'Authorization: Bearer YOUR_API_KEY' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "model": "${model}",
-    "messages": [
-      {"role": "user", "content": "你好，给我一个示例响应"}
-    ]
-  }'`;
-        }
-        if (lang === 'node') {
-          return `import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: "YOUR_API_KEY",
-  baseURL: "${baseUrl}"
-});
-
-const resp = await client.chat.completions.create({
-  model: "${model}",
-  messages: [{ role: "user", content: "你好，给我一个示例响应" }]
-});
-
-console.log(resp.choices[0].message.content);`;
-        }
-        // python
-        return `import requests
-
-url = "${endpoint}"
-headers = {
-  "Authorization": "Bearer YOUR_API_KEY",
-  "Content-Type": "application/json"
-}
-data = {
-  "model": "${model}",
-  "messages": [{"role": "user", "content": "你好，给我一个示例响应"}]
-}
-
-res = requests.post(url, headers=headers, json=data, timeout=60)
-print(res.json())`;
-      }
-
-      document.querySelectorAll('.qs-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          activeLang = tab.dataset.lang;
-          setActive('.qs-tab', 'active', activeLang, 'lang');
-          renderCode();
-        });
-      });
-
-      document.querySelectorAll('.qs-model').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeModel = btn.dataset.model;
-          setActive('.qs-model', 'active', activeModel, 'model');
-          renderCode();
-        });
-      });
-
-      copyCodeBtn.addEventListener('click', async () => {
-        const plain = codeEl.textContent;
-        try {
-          await navigator.clipboard.writeText(plain);
-        } catch {
-          const ta = document.createElement('textarea');
-          ta.value = plain; 
-          ta.style.position = 'fixed'; 
-          ta.style.opacity = '0';
-          document.body.appendChild(ta); 
-          ta.select(); 
-          document.execCommand('copy'); 
-          document.body.removeChild(ta);
-        }
-        copyCodeBtn.textContent = '✅ 已复制';
-        copyCodeBtn.style.background = 'var(--accent-gradient)';
-        copyCodeBtn.style.color = '#fff';
-        setTimeout(() => {
-          copyCodeBtn.textContent = '📋 复制代码';
-          copyCodeBtn.style.background = '';
-          copyCodeBtn.style.color = '';
-        }, 1500);
-      });
-
-      renderCode();
-
-      // 光标效果
-      const halo = document.getElementById('cursorHalo');
-      let rafId = null;
-      let targetX = window.innerWidth / 2, targetY = window.innerHeight / 2;
-      let x = targetX, y = targetY;
-
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      function animateCursor() {
-        x += (targetX - x) * 0.1;
-        y += (targetY - y) * 0.1;
-        halo.style.left = x + 'px';
-        halo.style.top = y + 'px';
-        rafId = requestAnimationFrame(animateCursor);
-      }
-      
-      if (!prefersReduced && window.innerWidth > 640) {
-        animateCursor();
-        window.addEventListener('mousemove', (e) => { 
-          targetX = e.clientX; 
-          targetY = e.clientY; 
-        }, { passive: true });
-      }
-
-      // 滚动动画
-      const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-      };
-
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-          }
-        });
-      }, observerOptions);
-
-      document.querySelectorAll('.scroll-reveal').forEach(el => {
-        observer.observe(el);
-      });
-
-      // 鼠标跟踪效果（模型卡片）
-      document.querySelectorAll('.model-card').forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-          const rect = card.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 100;
-          const y = ((e.clientY - rect.top) / rect.height) * 100;
-          card.style.setProperty('--mouse-x', `${x}%`);
-          card.style.setProperty('--mouse-y', `${y}%`);
-        });
-      });
-    });
-  </script>
+    </script>
 </body>
 </html>
