@@ -204,26 +204,6 @@
             min-width: 26px;
             height: 32px;
         }
-        /* Merge-safe: keep AI status styles scoped and uniquely named. */
-        .ai-status-badge {
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            border: 1px solid #475569;
-            color: #93c5fd;
-            background: rgba(30, 64, 175, 0.2);
-        }
-        .ai-loading-dot::after {
-            content: '...';
-            animation: dotPulse 1.2s infinite steps(4);
-        }
-        @keyframes dotPulse {
-            0% { content: ''; }
-            25% { content: '.'; }
-            50% { content: '..'; }
-            75% { content: '...'; }
-            100% { content: ''; }
-        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -518,7 +498,7 @@
             <div class="mb-4 p-3 rounded-lg border border-blue-900/60 bg-slate-950/60">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xs font-bold text-blue-300 uppercase tracking-wider"><i class="fa-solid fa-robot mr-1"></i>AI 优化助手 (Gemini)</h3>
-                    <span id="ai-status" class="ai-status-badge">未连接</span>
+                    <span id="ai-status" class="text-[10px] px-2 py-0.5 rounded-full border border-slate-600 text-blue-300 bg-blue-950/40">未连接</span>
                 </div>
                 <div class="flex gap-2 mb-2">
                     <input id="gemini-api-key" type="password" placeholder="输入 Gemini API Key 解锁 AI 优化"
@@ -1950,8 +1930,7 @@
         }
 
         function updateAiStatus(text, loading = false) {
-            aiStatusBadge.innerText = text;
-            aiStatusBadge.classList.toggle('ai-loading-dot', loading);
+            aiStatusBadge.innerText = loading ? `${text}...` : text;
         }
 
         function initializeAiSettings() {
@@ -2023,7 +2002,6 @@
                 alert(`AI 优化失败：${err.message}\n\n建议：\n1) 检查 Key 是否有效\n2) 检查模型名是否可用（如不可用可改为 gemini-2.5-flash）`);
             } finally {
                 aiOptimizeBtn.disabled = false;
-                aiStatusBadge.classList.remove('ai-loading-dot');
             }
         }
 
