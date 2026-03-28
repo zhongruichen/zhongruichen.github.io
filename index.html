@@ -455,6 +455,47 @@
                      <button id="toggle-all-reqs" class="text-[10px] text-blue-400 hover:text-blue-300 font-bold">全选 / 全不选</button>
                 </div>
 
+                <div class="mb-3 p-3 rounded border border-slate-700 bg-slate-900/70">
+                    <div class="text-xs text-slate-300 font-bold mb-2"><i class="fa-solid fa-sliders mr-1"></i>通用要求 · 高级策略</div>
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">输出语言</label>
+                            <select id="output-language" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="zh">中文优先</option>
+                                <option value="en">English</option>
+                                <option value="bilingual">中英双语</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">提示词语气</label>
+                            <select id="prompt-tone" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="strict">严谨工程化</option>
+                                <option value="creative">创意探索型</option>
+                                <option value="product">产品可上线型</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">目标设备</label>
+                            <select id="target-platform" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="desktop">桌面浏览器</option>
+                                <option value="mobile">移动端触摸屏</option>
+                                <option value="both">桌面 + 移动双端</option>
+                                <option value="kiosk">展会大屏 / kiosk</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">无障碍优先级</label>
+                            <select id="a11y-level" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="basic">基础</option>
+                                <option value="enhanced">增强</option>
+                                <option value="strict">严格 (WCAG导向)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex gap-2 mb-3">
                     <input type="text" id="new-req-input" placeholder="添加自定义要求 (如: 必须包含背景音乐)..."
                         class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-1 text-xs text-white focus:outline-none focus:border-blue-500 transition">
