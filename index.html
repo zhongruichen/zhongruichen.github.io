@@ -204,6 +204,7 @@
             min-width: 26px;
             height: 32px;
         }
+        /* Merge-safe: keep AI status styles scoped and uniquely named. */
         .ai-status-badge {
             font-size: 10px;
             padding: 2px 8px;
@@ -212,7 +213,7 @@
             color: #93c5fd;
             background: rgba(30, 64, 175, 0.2);
         }
-        .loading-dot::after {
+        .ai-loading-dot::after {
             content: '...';
             animation: dotPulse 1.2s infinite steps(4);
         }
@@ -1950,7 +1951,7 @@
 
         function updateAiStatus(text, loading = false) {
             aiStatusBadge.innerText = text;
-            aiStatusBadge.classList.toggle('loading-dot', loading);
+            aiStatusBadge.classList.toggle('ai-loading-dot', loading);
         }
 
         function initializeAiSettings() {
@@ -2022,7 +2023,7 @@
                 alert(`AI 优化失败：${err.message}\n\n建议：\n1) 检查 Key 是否有效\n2) 检查模型名是否可用（如不可用可改为 gemini-2.5-flash）`);
             } finally {
                 aiOptimizeBtn.disabled = false;
-                aiStatusBadge.classList.remove('loading-dot');
+                aiStatusBadge.classList.remove('ai-loading-dot');
             }
         }
 
