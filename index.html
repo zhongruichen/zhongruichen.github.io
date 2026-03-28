@@ -179,6 +179,50 @@
             background: rgba(67, 56, 202, 0.25);
             color: #c7d2fe;
         }
+
+        .tiny-btn {
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #cbd5e1;
+            transition: all 0.2s;
+        }
+        .tiny-btn:hover {
+            border-color: #60a5fa;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .stat-card {
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.7);
+        }
+        .favorite-toggle {
+            min-width: 26px;
+            height: 32px;
+        }
+        .ai-status-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            border: 1px solid #475569;
+            color: #93c5fd;
+            background: rgba(30, 64, 175, 0.2);
+        }
+        .loading-dot::after {
+            content: '...';
+            animation: dotPulse 1.2s infinite steps(4);
+        }
+        @keyframes dotPulse {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -210,6 +254,16 @@
                 <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-layer-group mr-2"></i>游戏分类</h2>
                 <div class="flex flex-wrap gap-2 border-b border-slate-700 pb-2" id="category-container">
                     <!-- Categories will be injected here -->
+                </div>
+            </div>
+
+            <!-- 1.5 Quick Actions -->
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-slate-400 uppercase mb-3 tracking-wider"><i class="fa-solid fa-bolt mr-2"></i>快捷动作</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button id="random-game-btn" class="tiny-btn"><i class="fa-solid fa-shuffle mr-1"></i>随机选游戏</button>
+                    <button id="recommend-game-btn" class="tiny-btn"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>智能推荐</button>
+                    <button id="reset-all-btn" class="tiny-btn"><i class="fa-solid fa-rotate-left mr-1"></i>重置所有配置</button>
                 </div>
             </div>
 
@@ -264,6 +318,21 @@
                         <input type="text" id="custom-game-input" placeholder="输入自定义游戏..."
                             class="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition shadow-sm">
                     </div>
+                </div>
+
+                <div class="mb-3 flex flex-wrap gap-2 items-center">
+                    <button id="profile-save-btn" class="tiny-btn"><i class="fa-solid fa-floppy-disk mr-1"></i>保存配置</button>
+                    <button id="profile-export-btn" class="tiny-btn"><i class="fa-solid fa-file-export mr-1"></i>导出JSON</button>
+                    <label class="tiny-btn cursor-pointer">
+                        <i class="fa-solid fa-file-import mr-1"></i>导入JSON
+                        <input type="file" id="profile-import-input" accept="application/json" class="hidden">
+                    </label>
+                    <span id="profile-status" class="text-[10px] text-slate-500">未保存</span>
+                </div>
+
+                <div class="mb-3 hidden" id="favorite-games-bar">
+                    <div class="text-[11px] text-amber-300 mb-1"><i class="fa-solid fa-star mr-1"></i>收藏游戏</div>
+                    <div id="favorite-games-list" class="flex flex-wrap gap-1"></div>
                 </div>
 
                 <!-- Game Grid -->
@@ -363,6 +432,47 @@
                      <button id="toggle-all-reqs" class="text-[10px] text-blue-400 hover:text-blue-300 font-bold">全选 / 全不选</button>
                 </div>
 
+                <div class="mb-3 p-3 rounded border border-slate-700 bg-slate-900/70">
+                    <div class="text-xs text-slate-300 font-bold mb-2"><i class="fa-solid fa-sliders mr-1"></i>通用要求 · 高级策略</div>
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">输出语言</label>
+                            <select id="output-language" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="zh">中文优先</option>
+                                <option value="en">English</option>
+                                <option value="bilingual">中英双语</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">提示词语气</label>
+                            <select id="prompt-tone" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="strict">严谨工程化</option>
+                                <option value="creative">创意探索型</option>
+                                <option value="product">产品可上线型</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">目标设备</label>
+                            <select id="target-platform" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="desktop">桌面浏览器</option>
+                                <option value="mobile">移动端触摸屏</option>
+                                <option value="both">桌面 + 移动双端</option>
+                                <option value="kiosk">展会大屏 / kiosk</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">无障碍优先级</label>
+                            <select id="a11y-level" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-xs outline-none focus:border-blue-500">
+                                <option value="basic">基础</option>
+                                <option value="enhanced">增强</option>
+                                <option value="strict">严格 (WCAG导向)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex gap-2 mb-3">
                     <input type="text" id="new-req-input" placeholder="添加自定义要求 (如: 必须包含背景音乐)..."
                         class="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-1 text-xs text-white focus:outline-none focus:border-blue-500 transition">
@@ -384,6 +494,49 @@
                 <span><i class="fa-solid fa-terminal mr-2"></i>生成的提示词 (Prompt)</span>
                 <span id="token-estimate" class="text-xs text-slate-500 font-normal">Est. output: Medium</span>
             </h2>
+
+            <div class="grid grid-cols-2 gap-2 mb-4" id="prompt-stats">
+                <div class="stat-card">
+                    <div class="text-[10px] text-slate-400">字符数</div>
+                    <div class="text-sm text-white font-bold" id="stat-char-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-[10px] text-slate-400">提示词行数</div>
+                    <div class="text-sm text-white font-bold" id="stat-line-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-[10px] text-slate-400">要求项数量</div>
+                    <div class="text-sm text-white font-bold" id="stat-requirement-count">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-[10px] text-slate-400">预估开发时长</div>
+                    <div class="text-sm text-white font-bold" id="stat-effort">-</div>
+                </div>
+            </div>
+
+            <div class="mb-4 p-3 rounded-lg border border-blue-900/60 bg-slate-950/60">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-blue-300 uppercase tracking-wider"><i class="fa-solid fa-robot mr-1"></i>AI 优化助手 (Gemini)</h3>
+                    <span id="ai-status" class="ai-status-badge">未连接</span>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <input id="gemini-api-key" type="password" placeholder="输入 Gemini API Key 解锁 AI 优化"
+                        class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                    <button id="save-gemini-key-btn" class="tiny-btn !py-1 !px-2">保存Key</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                    <input id="gemini-model" type="text" value="gemini-3.1-flash-lite" class="col-span-2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500" placeholder="模型名">
+                    <button id="ai-optimize-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI优化</button>
+                </div>
+                <textarea id="ai-extra-instruction" rows="2" placeholder="附加要求：例如更重视新手引导、UI一致性、性能预算..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 resize-none mb-2"></textarea>
+                <textarea id="ai-optimized-output" rows="4" placeholder="AI 优化后的提示词会显示在这里..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-y"></textarea>
+                <div class="flex justify-between mt-2">
+                    <button id="apply-ai-result-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-check mr-1"></i>应用结果</button>
+                    <button id="clear-ai-result-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-eraser mr-1"></i>清空结果</button>
+                </div>
+            </div>
 
             <div class="flex-1 relative mb-4 group">
                 <textarea id="output-prompt"
@@ -1309,6 +1462,15 @@
         "Angry Birds Star Wars", "Cut the Rope 2", "Cut the Rope: Time Travel", "Where's My Water? 2",
         "Where's My Perry?", "Sprinkle", "Sprinkle Islands", "Smash Hit",
         "PinOut", "Does not Commute", "Mediocre Games", "Osmos"
+    ],
+    "🤖 AI实验与自动化玩法": [
+        "AI 文字冒险生成器", "Procedural Quest Generator", "AI Roguelike Director", "神经网络 Flappy Bird",
+        "进化算法赛车 (NEAT Racing)", "强化学习迷宫 (RL Maze)", "自动战棋模拟器", "Auto Chess Sandbox",
+        "卡牌构筑 AI 教练", "剧情分支生成器 (Story Weave)", "LLM 地牢主持人", "AI NPC 社交模拟",
+        "语音指令塔防", "多代理生存模拟 (Multi-Agent Survival)", "自动化工厂策略 (Factory Planner)",
+        "经济系统沙盒 (Market Sim)", "自适应难度平台跳跃", "Boss 行为学习器", "敌群协同 AI 射击",
+        "生成式关卡编辑器", "神经网络像素绘图挑战", "AI 推理解谜房间", "事件驱动经营模拟",
+        "实时战术建议助手", "AI 旁白解说模式", "行为树可视化调参游戏", "决策树排兵布阵"
     ]
 };
 
@@ -1355,7 +1517,13 @@
             isCustomGame: false,
             extensionFeatures: [],
             extensionIntensity: 2,
-            customExtensionNote: ""
+            customExtensionNote: "",
+            outputLanguage: "zh",
+            promptTone: "strict",
+            targetPlatform: "desktop",
+            a11yLevel: "basic",
+            favoriteGames: [],
+            aiModel: "gemini-3.1-flash-lite"
         };
 
         // --- 3. DOM Elements ---
@@ -1378,6 +1546,19 @@
         const extensionCustomNoteInput = document.getElementById('extension-custom-note');
         const extensionSummary = document.getElementById('extension-selected-summary');
         const extensionResetBtn = document.getElementById('extension-reset-btn');
+        const outputLanguageSelect = document.getElementById('output-language');
+        const promptToneSelect = document.getElementById('prompt-tone');
+        const targetPlatformSelect = document.getElementById('target-platform');
+        const a11yLevelSelect = document.getElementById('a11y-level');
+        const randomGameBtn = document.getElementById('random-game-btn');
+        const recommendGameBtn = document.getElementById('recommend-game-btn');
+        const resetAllBtn = document.getElementById('reset-all-btn');
+        const profileSaveBtn = document.getElementById('profile-save-btn');
+        const profileExportBtn = document.getElementById('profile-export-btn');
+        const profileImportInput = document.getElementById('profile-import-input');
+        const profileStatus = document.getElementById('profile-status');
+        const favoriteGamesBar = document.getElementById('favorite-games-bar');
+        const favoriteGamesList = document.getElementById('favorite-games-list');
 
         const newReqInput = document.getElementById('new-req-input');
         const addReqBtn = document.getElementById('add-req-btn');
@@ -1386,6 +1567,19 @@
         const historyList = document.getElementById('history-list');
         const clearHistoryBtn = document.getElementById('clear-history');
         const tokenEstimate = document.getElementById('token-estimate');
+        const statCharCount = document.getElementById('stat-char-count');
+        const statLineCount = document.getElementById('stat-line-count');
+        const statRequirementCount = document.getElementById('stat-requirement-count');
+        const statEffort = document.getElementById('stat-effort');
+        const geminiApiKeyInput = document.getElementById('gemini-api-key');
+        const saveGeminiKeyBtn = document.getElementById('save-gemini-key-btn');
+        const geminiModelInput = document.getElementById('gemini-model');
+        const aiOptimizeBtn = document.getElementById('ai-optimize-btn');
+        const aiExtraInstructionInput = document.getElementById('ai-extra-instruction');
+        const aiOptimizedOutput = document.getElementById('ai-optimized-output');
+        const applyAiResultBtn = document.getElementById('apply-ai-result-btn');
+        const clearAiResultBtn = document.getElementById('clear-ai-result-btn');
+        const aiStatusBadge = document.getElementById('ai-status');
 
         // Mode specific elements
         const fusionControls = document.getElementById('fusion-controls');
@@ -1488,6 +1682,8 @@
             }
 
             gamesToShow.forEach(item => {
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex items-stretch gap-1";
                 const btn = document.createElement('button');
                 const name = item.name;
 
@@ -1539,7 +1735,58 @@
                     renderGames();
                     updatePrompt();
                 };
-                gamesGrid.appendChild(btn);
+                const favoriteBtn = document.createElement('button');
+                const isFav = state.favoriteGames.includes(name);
+                favoriteBtn.className = `favorite-toggle rounded border text-xs ${isFav ? 'bg-amber-500/20 border-amber-400 text-amber-300' : 'bg-slate-900 border-slate-700 text-slate-500 hover:text-amber-300'}`;
+                favoriteBtn.innerHTML = `<i class="fa-${isFav ? 'solid' : 'regular'} fa-star"></i>`;
+                favoriteBtn.title = isFav ? '取消收藏' : '收藏';
+                favoriteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleFavoriteGame(name);
+                };
+
+                wrapper.appendChild(btn);
+                wrapper.appendChild(favoriteBtn);
+                gamesGrid.appendChild(wrapper);
+            });
+        }
+
+        function toggleFavoriteGame(gameName) {
+            if (state.favoriteGames.includes(gameName)) {
+                state.favoriteGames = state.favoriteGames.filter(g => g !== gameName);
+            } else {
+                state.favoriteGames.unshift(gameName);
+                if (state.favoriteGames.length > 20) state.favoriteGames = state.favoriteGames.slice(0, 20);
+            }
+            saveProfileToLocal();
+            renderFavoriteGames();
+            renderGames();
+        }
+
+        function renderFavoriteGames() {
+            favoriteGamesList.innerHTML = '';
+            const favorites = state.favoriteGames.filter(Boolean);
+            favoriteGamesBar.classList.toggle('hidden', favorites.length === 0);
+            favorites.forEach(game => {
+                const chip = document.createElement('button');
+                chip.className = 'text-[10px] px-2 py-1 rounded border border-amber-500/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20';
+                chip.innerText = game;
+                chip.onclick = () => {
+                    const category = Object.keys(gamesDB).find(cat => gamesDB[cat].includes(game));
+                    if (category) {
+                        state.category = category;
+                        renderCategories();
+                    }
+                    state.mode = 'single';
+                    setMode('single');
+                    state.game = game;
+                    state.isCustomGame = false;
+                    customInput.value = '';
+                    searchInput.value = '';
+                    renderGames();
+                    updatePrompt();
+                };
+                favoriteGamesList.appendChild(chip);
             });
         }
 
@@ -1620,6 +1867,162 @@
                 state.extensionFeatures = [];
                 state.extensionIntensity = 2;
                 state.customExtensionNote = "";
+            }
+        }
+
+        function snapshotProfile() {
+            return {
+                mode: state.mode,
+                category: state.category,
+                game: state.game,
+                selectedGames: state.selectedGames,
+                fusionStrategy: state.fusionStrategy,
+                complexity: state.complexity,
+                version: state.version,
+                visualStyle: state.visualStyle,
+                techStack: state.techStack,
+                requirements: state.requirements,
+                extensionFeatures: state.extensionFeatures,
+                extensionIntensity: state.extensionIntensity,
+                customExtensionNote: state.customExtensionNote,
+                outputLanguage: state.outputLanguage,
+                promptTone: state.promptTone,
+                targetPlatform: state.targetPlatform,
+                a11yLevel: state.a11yLevel,
+                favoriteGames: state.favoriteGames,
+                aiModel: state.aiModel
+            };
+        }
+
+        function saveProfileToLocal() {
+            localStorage.setItem('prompt_profile_v2', JSON.stringify(snapshotProfile()));
+            profileStatus.innerText = `自动保存：${new Date().toLocaleTimeString()}`;
+        }
+
+        function applyProfile(profile) {
+            if (!profile || typeof profile !== 'object') return;
+            Object.assign(state, {
+                ...state,
+                ...profile,
+                selectedGames: Array.isArray(profile.selectedGames) ? profile.selectedGames : [],
+                requirements: Array.isArray(profile.requirements) ? profile.requirements : [],
+                extensionFeatures: Array.isArray(profile.extensionFeatures) ? profile.extensionFeatures : [],
+                favoriteGames: Array.isArray(profile.favoriteGames) ? profile.favoriteGames : []
+            });
+            syncFormValuesFromState();
+            renderCategories();
+            setMode(state.mode || 'single');
+            renderGames();
+            renderComplexity();
+            renderRequirements();
+            renderExtensionPanel();
+            renderFavoriteGames();
+            updatePrompt();
+        }
+
+        function loadProfileFromLocal() {
+            try {
+                const raw = localStorage.getItem('prompt_profile_v2');
+                if (!raw) return;
+                applyProfile(JSON.parse(raw));
+                profileStatus.innerText = '已自动加载上次配置';
+            } catch (_) {
+                profileStatus.innerText = '配置加载失败，已使用默认值';
+            }
+        }
+
+        function syncFormValuesFromState() {
+            gameVersionSelect.value = state.version;
+            visualStyleSelect.value = state.visualStyle;
+            techStackSelect.value = state.techStack;
+            outputLanguageSelect.value = state.outputLanguage;
+            promptToneSelect.value = state.promptTone;
+            targetPlatformSelect.value = state.targetPlatform;
+            a11yLevelSelect.value = state.a11yLevel;
+            extensionCustomNoteInput.value = state.customExtensionNote;
+            extensionIntensityInput.value = state.extensionIntensity;
+            geminiModelInput.value = state.aiModel || "gemini-3.1-flash-lite";
+        }
+
+        function getGeminiKey() {
+            return localStorage.getItem('gemini_api_key_v1') || '';
+        }
+
+        function updateAiStatus(text, loading = false) {
+            aiStatusBadge.innerText = text;
+            aiStatusBadge.classList.toggle('loading-dot', loading);
+        }
+
+        function initializeAiSettings() {
+            const key = getGeminiKey();
+            if (key) {
+                geminiApiKeyInput.value = key;
+                updateAiStatus('已连接');
+            } else {
+                updateAiStatus('未连接');
+            }
+            geminiModelInput.value = state.aiModel || "gemini-3.1-flash-lite";
+        }
+
+        async function optimizePromptWithGemini() {
+            const apiKey = geminiApiKeyInput.value.trim();
+            if (!apiKey) {
+                alert('请先输入 Gemini API Key。');
+                return;
+            }
+
+            const promptText = outputPrompt.value.trim();
+            if (!promptText) {
+                alert('当前提示词为空，无法优化。');
+                return;
+            }
+
+            const extraInstruction = aiExtraInstructionInput.value.trim();
+            const selectedModel = geminiModelInput.value.trim() || 'gemini-3.1-flash-lite';
+            state.aiModel = selectedModel;
+            updateAiStatus('优化中', true);
+            aiOptimizeBtn.disabled = true;
+
+            const systemTask = [
+                '你是资深游戏策划 + 前端技术总监。',
+                '请优化用户给出的“单文件HTML游戏生成提示词”，目标是：',
+                '1) 逻辑严谨、可执行、低歧义；2) 用户体验与性能兼顾；3) 可配置性和完整性更强。',
+                '请直接输出“优化后的完整提示词”，不要解释过程。'
+            ].join('\n');
+
+            const finalInput = `${systemTask}\n\n【原始提示词】\n${promptText}\n\n【附加要求】\n${extraInstruction || '无'}`;
+
+            try {
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(selectedModel)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: finalInput }] }],
+                        generationConfig: {
+                            temperature: 0.35,
+                            topP: 0.9,
+                            maxOutputTokens: 4096
+                        }
+                    })
+                });
+
+                const data = await resp.json();
+                const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
+                if (!resp.ok || !text) {
+                    const err = data?.error?.message || '模型返回为空，可能模型名不可用或 Key 权限不足。';
+                    throw new Error(err);
+                }
+
+                aiOptimizedOutput.value = text;
+                updateAiStatus('优化完成');
+                saveProfileToLocal();
+            } catch (err) {
+                console.error(err);
+                updateAiStatus('调用失败');
+                alert(`AI 优化失败：${err.message}\n\n建议：\n1) 检查 Key 是否有效\n2) 检查模型名是否可用（如不可用可改为 gemini-2.5-flash）`);
+            } finally {
+                aiOptimizeBtn.disabled = false;
+                aiStatusBadge.classList.remove('loading-dot');
             }
         }
 
@@ -1823,6 +2226,34 @@
                 prompt += `- ${techText}\n`;
             }
 
+            const languageMap = {
+                zh: "输出内容以中文为主，变量与注释允许中英混排。",
+                en: "Output primarily in English, with concise professional comments.",
+                bilingual: "关键说明使用中英双语并保持术语一致。"
+            };
+            const toneMap = {
+                strict: "采用工程化、可测试、低歧义的指令风格，减少模糊描述。",
+                creative: "鼓励提供可选创意分支，但必须保持主流程可运行。",
+                product: "以可交付产品为目标，包含体验打磨与运营扩展点。"
+            };
+            const platformMap = {
+                desktop: "优先适配桌面浏览器键鼠交互与大屏布局。",
+                mobile: "优先适配移动端触摸交互与竖屏/横屏切换。",
+                both: "同时适配桌面+移动端，提供统一输入抽象层。",
+                kiosk: "为展会大屏/无人值守 kiosk 环境优化，支持自动循环演示。"
+            };
+            const a11yMap = {
+                basic: "提供基础无障碍：可读字体、足够对比度、关键按钮标签。",
+                enhanced: "提供增强无障碍：键盘导航焦点样式、音量控制、减少动态模式。",
+                strict: "严格无障碍：语义化结构、ARIA 标签、色盲安全配色、可重映射按键。"
+            };
+
+            prompt += `\n**输出策略与体验目标**:\n`;
+            prompt += `- ${languageMap[state.outputLanguage]}\n`;
+            prompt += `- ${toneMap[state.promptTone]}\n`;
+            prompt += `- ${platformMap[state.targetPlatform]}\n`;
+            prompt += `- ${a11yMap[state.a11yLevel]}\n`;
+
             if (shouldShowExtensionPanel() && (state.extensionFeatures.length > 0 || state.customExtensionNote.trim())) {
                 prompt += `\n**扩展功能优化**:\n`;
                 prompt += `- 扩展强度：${getExtensionIntensityText(state.extensionIntensity)}。\n`;
@@ -1854,6 +2285,21 @@
         function updatePrompt() {
             const p = generatePrompt();
             outputPrompt.value = p;
+            const lines = p ? p.split('\n').length : 0;
+            statCharCount.innerText = `${p.length}`;
+            statLineCount.innerText = `${lines}`;
+            statRequirementCount.innerText = `${state.requirements.length}`;
+            const effortMap = {
+                raw: "0.5-1小时",
+                simple: "2-4小时",
+                normal: "0.5-1天",
+                advanced: "1-2天",
+                complex: "2-4天",
+                professional: "4-7天",
+                extreme: "7天+"
+            };
+            statEffort.innerText = effortMap[state.complexity] || "-";
+            saveProfileToLocal();
         }
 
         function addNewRequirement() {
@@ -1880,6 +2326,115 @@
         }
 
         // --- 6. Event Listeners ---
+
+        randomGameBtn.addEventListener('click', () => {
+            const categories = Object.keys(gamesDB);
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            const randomList = gamesDB[randomCategory];
+            const randomGame = randomList[Math.floor(Math.random() * randomList.length)];
+            state.category = randomCategory;
+            state.game = randomGame;
+            state.isCustomGame = false;
+            customInput.value = '';
+            searchInput.value = '';
+            setMode('single');
+            renderCategories();
+            renderGames();
+            updatePrompt();
+        });
+
+        recommendGameBtn.addEventListener('click', () => {
+            let targetPool = gamesDB[state.category] || [];
+            if (state.favoriteGames.length >= 3) {
+                const favCategorySet = new Set(
+                    state.favoriteGames
+                        .map(f => Object.keys(gamesDB).find(cat => gamesDB[cat].includes(f)))
+                        .filter(Boolean)
+                );
+                const mergedPool = [];
+                favCategorySet.forEach(cat => mergedPool.push(...gamesDB[cat]));
+                if (mergedPool.length > 0) targetPool = mergedPool;
+            }
+            const pick = targetPool[Math.floor(Math.random() * targetPool.length)];
+            if (!pick) return;
+            const pickCategory = Object.keys(gamesDB).find(cat => gamesDB[cat].includes(pick)) || state.category;
+            state.category = pickCategory;
+            state.game = pick;
+            state.isCustomGame = false;
+            customInput.value = '';
+            renderCategories();
+            renderGames();
+            updatePrompt();
+        });
+
+        resetAllBtn.addEventListener('click', () => {
+            state = {
+                ...state,
+                mode: 'single',
+                category: Object.keys(gamesDB)[0],
+                game: gamesDB[Object.keys(gamesDB)[0]][0],
+                selectedGames: [],
+                fusionStrategy: 'equal',
+                complexity: "raw",
+                version: "",
+                visualStyle: "",
+                techStack: "",
+                requirements: [],
+                isCustomGame: false,
+                extensionFeatures: [],
+                extensionIntensity: 2,
+                customExtensionNote: "",
+                outputLanguage: "zh",
+                promptTone: "strict",
+                targetPlatform: "desktop",
+                a11yLevel: "basic",
+                aiModel: "gemini-3.1-flash-lite"
+            };
+            customInput.value = '';
+            searchInput.value = '';
+            syncFormValuesFromState();
+            renderCategories();
+            renderGames();
+            renderComplexity();
+            renderRequirements();
+            renderExtensionPanel();
+            renderSelectedGames();
+            updatePrompt();
+            profileStatus.innerText = "已重置为默认配置";
+        });
+
+        saveGeminiKeyBtn.addEventListener('click', () => {
+            const key = geminiApiKeyInput.value.trim();
+            if (!key) {
+                localStorage.removeItem('gemini_api_key_v1');
+                updateAiStatus('未连接');
+                profileStatus.innerText = 'Gemini Key 已清除';
+                return;
+            }
+            localStorage.setItem('gemini_api_key_v1', key);
+            updateAiStatus('已连接');
+            profileStatus.innerText = 'Gemini Key 已保存（本地）';
+        });
+
+        geminiModelInput.addEventListener('input', (e) => {
+            state.aiModel = e.target.value.trim() || "gemini-3.1-flash-lite";
+            saveProfileToLocal();
+        });
+
+        aiOptimizeBtn.addEventListener('click', optimizePromptWithGemini);
+
+        applyAiResultBtn.addEventListener('click', () => {
+            const val = aiOptimizedOutput.value.trim();
+            if (!val) return;
+            outputPrompt.value = val;
+            updateAiStatus('已应用');
+        });
+
+        clearAiResultBtn.addEventListener('click', () => {
+            aiOptimizedOutput.value = '';
+            aiExtraInstructionInput.value = '';
+            updateAiStatus(getGeminiKey() ? '已连接' : '未连接');
+        });
 
         searchInput.addEventListener('input', (e) => {
             renderGames();
@@ -1945,6 +2500,23 @@
             updatePrompt();
         });
 
+        outputLanguageSelect.addEventListener('change', (e) => {
+            state.outputLanguage = e.target.value;
+            updatePrompt();
+        });
+        promptToneSelect.addEventListener('change', (e) => {
+            state.promptTone = e.target.value;
+            updatePrompt();
+        });
+        targetPlatformSelect.addEventListener('change', (e) => {
+            state.targetPlatform = e.target.value;
+            updatePrompt();
+        });
+        a11yLevelSelect.addEventListener('change', (e) => {
+            state.a11yLevel = e.target.value;
+            updatePrompt();
+        });
+
         extensionIntensityInput.addEventListener('input', (e) => {
             state.extensionIntensity = Number(e.target.value);
             extensionIntensityLabel.innerText = `强度：${getExtensionIntensityText(state.extensionIntensity)}`;
@@ -1992,7 +2564,7 @@
         // Copy & History Logic
         function saveToHistory(prompt, title) {
             let history = JSON.parse(localStorage.getItem('prompt_history') || '[]');
-            const timestamp = new Date().toLocaleTimeString();
+            const timestamp = new Date().toLocaleString();
             history.unshift({ title, prompt, time: timestamp });
             if (history.length > 10) history.pop();
             localStorage.setItem('prompt_history', JSON.stringify(history));
@@ -2063,14 +2635,49 @@
             renderHistory();
         });
 
+        profileSaveBtn.addEventListener('click', () => {
+            saveProfileToLocal();
+            profileStatus.innerText = `已手动保存：${new Date().toLocaleTimeString()}`;
+        });
+
+        profileExportBtn.addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(snapshotProfile(), null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gameprompt-profile-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            profileStatus.innerText = "配置已导出";
+        });
+
+        profileImportInput.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                applyProfile(parsed);
+                saveProfileToLocal();
+                profileStatus.innerText = "配置导入成功";
+            } catch (err) {
+                profileStatus.innerText = "导入失败：JSON格式无效";
+            }
+            profileImportInput.value = '';
+        });
+
         // --- 7. Initialization ---
         setMode('single'); // Initialize
         loadExtensionConfig();
+        loadProfileFromLocal();
         renderCategories();
         renderGames();
         renderComplexity();
         renderRequirements();
         renderExtensionPanel();
+        renderFavoriteGames();
+        syncFormValuesFromState();
+        initializeAiSettings();
         renderHistory();
         updatePrompt();
 
