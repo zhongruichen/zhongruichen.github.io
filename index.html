@@ -495,30 +495,6 @@
                 </div>
             </div>
 
-            <div class="mb-4 p-3 rounded-lg border border-blue-900/60 bg-slate-950/60">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-bold text-blue-300 uppercase tracking-wider"><i class="fa-solid fa-robot mr-1"></i>AI 优化助手 (Gemini)</h3>
-                    <span id="ai-status" class="text-[10px] px-2 py-0.5 rounded-full border border-slate-600 text-blue-300 bg-blue-950/40">未连接</span>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <input id="gemini-api-key" type="password" placeholder="输入 Gemini API Key 解锁 AI 优化"
-                        class="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
-                    <button id="save-gemini-key-btn" class="tiny-btn !py-1 !px-2">保存Key</button>
-                </div>
-                <div class="grid grid-cols-3 gap-2 mb-2">
-                    <input id="gemini-model" type="text" value="gemini-3.1-flash-lite" class="col-span-2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500" placeholder="模型名">
-                    <button id="ai-optimize-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>AI优化</button>
-                </div>
-                <textarea id="ai-extra-instruction" rows="2" placeholder="附加要求：例如更重视新手引导、UI一致性、性能预算..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 resize-none mb-2"></textarea>
-                <textarea id="ai-optimized-output" rows="4" placeholder="AI 优化后的提示词会显示在这里..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 resize-y"></textarea>
-                <div class="flex justify-between mt-2">
-                    <button id="apply-ai-result-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-check mr-1"></i>应用结果</button>
-                    <button id="clear-ai-result-btn" class="tiny-btn !py-1 !px-2"><i class="fa-solid fa-eraser mr-1"></i>清空结果</button>
-                </div>
-            </div>
-
             <div class="flex-1 relative mb-4 group">
                 <textarea id="output-prompt"
                     class="w-full h-full bg-slate-800 text-slate-300 p-4 rounded-lg border border-slate-700 mono-font text-sm focus:outline-none focus:border-blue-500 resize-none leading-relaxed"
@@ -1503,8 +1479,7 @@
             promptTone: "strict",
             targetPlatform: "desktop",
             a11yLevel: "basic",
-            favoriteGames: [],
-            aiModel: "gemini-3.1-flash-lite"
+            favoriteGames: []
         };
 
         // --- 3. DOM Elements ---
@@ -1552,15 +1527,6 @@
         const statLineCount = document.getElementById('stat-line-count');
         const statRequirementCount = document.getElementById('stat-requirement-count');
         const statEffort = document.getElementById('stat-effort');
-        const geminiApiKeyInput = document.getElementById('gemini-api-key');
-        const saveGeminiKeyBtn = document.getElementById('save-gemini-key-btn');
-        const geminiModelInput = document.getElementById('gemini-model');
-        const aiOptimizeBtn = document.getElementById('ai-optimize-btn');
-        const aiExtraInstructionInput = document.getElementById('ai-extra-instruction');
-        const aiOptimizedOutput = document.getElementById('ai-optimized-output');
-        const applyAiResultBtn = document.getElementById('apply-ai-result-btn');
-        const clearAiResultBtn = document.getElementById('clear-ai-result-btn');
-        const aiStatusBadge = document.getElementById('ai-status');
 
         // Mode specific elements
         const fusionControls = document.getElementById('fusion-controls');
@@ -1870,8 +1836,7 @@
                 promptTone: state.promptTone,
                 targetPlatform: state.targetPlatform,
                 a11yLevel: state.a11yLevel,
-                favoriteGames: state.favoriteGames,
-                aiModel: state.aiModel
+                favoriteGames: state.favoriteGames
             };
         }
 
@@ -1922,87 +1887,6 @@
             a11yLevelSelect.value = state.a11yLevel;
             extensionCustomNoteInput.value = state.customExtensionNote;
             extensionIntensityInput.value = state.extensionIntensity;
-            geminiModelInput.value = state.aiModel || "gemini-3.1-flash-lite";
-        }
-
-        function getGeminiKey() {
-            return localStorage.getItem('gemini_api_key_v1') || '';
-        }
-
-        function updateAiStatus(text, loading = false) {
-            aiStatusBadge.innerText = loading ? `${text}...` : text;
-        }
-
-        function initializeAiSettings() {
-            const key = getGeminiKey();
-            if (key) {
-                geminiApiKeyInput.value = key;
-                updateAiStatus('已连接');
-            } else {
-                updateAiStatus('未连接');
-            }
-            geminiModelInput.value = state.aiModel || "gemini-3.1-flash-lite";
-        }
-
-        async function optimizePromptWithGemini() {
-            const apiKey = geminiApiKeyInput.value.trim();
-            if (!apiKey) {
-                alert('请先输入 Gemini API Key。');
-                return;
-            }
-
-            const promptText = outputPrompt.value.trim();
-            if (!promptText) {
-                alert('当前提示词为空，无法优化。');
-                return;
-            }
-
-            const extraInstruction = aiExtraInstructionInput.value.trim();
-            const selectedModel = geminiModelInput.value.trim() || 'gemini-3.1-flash-lite';
-            state.aiModel = selectedModel;
-            updateAiStatus('优化中', true);
-            aiOptimizeBtn.disabled = true;
-
-            const systemTask = [
-                '你是资深游戏策划 + 前端技术总监。',
-                '请优化用户给出的“单文件HTML游戏生成提示词”，目标是：',
-                '1) 逻辑严谨、可执行、低歧义；2) 用户体验与性能兼顾；3) 可配置性和完整性更强。',
-                '请直接输出“优化后的完整提示词”，不要解释过程。'
-            ].join('\n');
-
-            const finalInput = `${systemTask}\n\n【原始提示词】\n${promptText}\n\n【附加要求】\n${extraInstruction || '无'}`;
-
-            try {
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(selectedModel)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: finalInput }] }],
-                        generationConfig: {
-                            temperature: 0.35,
-                            topP: 0.9,
-                            maxOutputTokens: 4096
-                        }
-                    })
-                });
-
-                const data = await resp.json();
-                const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
-                if (!resp.ok || !text) {
-                    const err = data?.error?.message || '模型返回为空，可能模型名不可用或 Key 权限不足。';
-                    throw new Error(err);
-                }
-
-                aiOptimizedOutput.value = text;
-                updateAiStatus('优化完成');
-                saveProfileToLocal();
-            } catch (err) {
-                console.error(err);
-                updateAiStatus('调用失败');
-                alert(`AI 优化失败：${err.message}\n\n建议：\n1) 检查 Key 是否有效\n2) 检查模型名是否可用（如不可用可改为 gemini-2.5-flash）`);
-            } finally {
-                aiOptimizeBtn.disabled = false;
-            }
         }
 
         function getExtensionIntensityText(level) {
@@ -2366,8 +2250,7 @@
                 outputLanguage: "zh",
                 promptTone: "strict",
                 targetPlatform: "desktop",
-                a11yLevel: "basic",
-                aiModel: "gemini-3.1-flash-lite"
+                a11yLevel: "basic"
             };
             customInput.value = '';
             searchInput.value = '';
@@ -2380,39 +2263,6 @@
             renderSelectedGames();
             updatePrompt();
             profileStatus.innerText = "已重置为默认配置";
-        });
-
-        saveGeminiKeyBtn.addEventListener('click', () => {
-            const key = geminiApiKeyInput.value.trim();
-            if (!key) {
-                localStorage.removeItem('gemini_api_key_v1');
-                updateAiStatus('未连接');
-                profileStatus.innerText = 'Gemini Key 已清除';
-                return;
-            }
-            localStorage.setItem('gemini_api_key_v1', key);
-            updateAiStatus('已连接');
-            profileStatus.innerText = 'Gemini Key 已保存（本地）';
-        });
-
-        geminiModelInput.addEventListener('input', (e) => {
-            state.aiModel = e.target.value.trim() || "gemini-3.1-flash-lite";
-            saveProfileToLocal();
-        });
-
-        aiOptimizeBtn.addEventListener('click', optimizePromptWithGemini);
-
-        applyAiResultBtn.addEventListener('click', () => {
-            const val = aiOptimizedOutput.value.trim();
-            if (!val) return;
-            outputPrompt.value = val;
-            updateAiStatus('已应用');
-        });
-
-        clearAiResultBtn.addEventListener('click', () => {
-            aiOptimizedOutput.value = '';
-            aiExtraInstructionInput.value = '';
-            updateAiStatus(getGeminiKey() ? '已连接' : '未连接');
         });
 
         searchInput.addEventListener('input', (e) => {
@@ -2656,7 +2506,6 @@
         renderExtensionPanel();
         renderFavoriteGames();
         syncFormValuesFromState();
-        initializeAiSettings();
         renderHistory();
         updatePrompt();
 
